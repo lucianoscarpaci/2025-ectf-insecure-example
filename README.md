@@ -91,24 +91,6 @@ python -m pip install ./tools/
 python -m pip install -e ./design/
 ```
 
-### PowerShell:
-
-```
-#Create a virtual environment in the root of the design
-cd .\<example_root>
-python -m venv .venv --prompt ectf-example
-
-#Enable virtual environment 
-. .\.venv\Scripts\Activate.ps1
-
-#Install the host tools
-python -m pip install .\tools\
-
-#Install the host design design elements as an editable module 
-python -m pip install -e .\design\
-
-```
-
 ### Building the deployment
 
 Optionally, shared secrets used by the decoder and encoder can be generated. A directory containing shared secrets
@@ -137,14 +119,6 @@ directory.
 cd <example_root>/decoder
 docker build -t decoder .
 docker run --rm -v ./build_out:/out -v ./:/decoder -v ./../secrets:/secrets -e DECODER_ID=0xdeadbeef decoder
-```
-
-### PowerShell:
-
-```
-cd <example_root>\decoder 
-docker build -t decoder .
-docker run --rm -v .\build_out:/out -v .\:/decoder -v .\..\secrets:/secrets -e DECODER_ID=0xdeadbeef decoder
 ```
 
 #### Note: If the build is hanging indefinitely, try restarting Docker. If that does not resolve the issue, a system restart should fix the issue.
@@ -205,13 +179,7 @@ options:
 #### Linux
 
 ```bash
-python -m ectf25.utils.flash ./build_out/max78000.bin /dev/tty.usbmodem11302
-```
-
-#### PowerShell
-
-```
-python -m ectf25.utils.flash .\build_out\max78000.bin COM12
+python -m ectf25.utils.flash ./decoder/build_out/max78000.bin /dev/tty.usbmodem11302
 ```
 
 ## Host Tools
@@ -241,12 +209,6 @@ options:
 python -m ectf25.tv.list /dev/tty.usbmodem11302
 ```
 
-#### PowerShell
-
-```
-python -m ectf25.tv.list COM12
-```
-
 ### Subscription Update Tool
 
 The subscription update tool takes in an encoded update packet (in the form of a `.bin` file) and sends it to the
@@ -272,12 +234,6 @@ options:
 
 ```bash
 python -m ectf25.tv.subscribe subscription.bin /dev/tty.usbmodem11302
-```
-
-#### PowerShell
-
-```
-python -m ectf25.tv.subscribe subscription.bin COM12
 ```
 
 ### Tester Tool
@@ -319,13 +275,7 @@ options:
 #### Linux
 
 ```bash
-python -m ectf25.utils.tester --port /dev/tty.usbmodem11302 -s ./secrets.json rand -c 1 -f 64
-```
-
-#### PowerShell
-
-```
-python -m ectf25.utils.tester --port COM12 -s .\secrets\secrets.json rand -c 1 -f 64
+python -m ectf25.utils.tester --port /dev/tty.usbmodem11302 -s ./secrets/secrets.json rand -c 1 -f 64
 ```
 
 ## Running the Satellite and Encoder
@@ -361,13 +311,6 @@ options:
 ```bash
 python -m ectf25.uplink secrets/secrets.json localhost 2000 1:10:frames/x_c0.json
 ```
-
-#### PowerShell
-
-```
-python -m ectf25.uplink secrets\secrets.json localhost 2000 1:10:frames/x_c0.json
-```
-
 ### Satellite
 
 The satellite is responsible for broadcasting all frames received from the uplink to all
@@ -420,10 +363,4 @@ options:
 
 ```bash
 python -m ectf25.tv.run localhost 2001 /dev/tty.usbmodem11302
-```
-
-#### PowerShell
-
-```
-python -m ectf25.tv.run localhost 2001 COM12
 ```

@@ -177,6 +177,7 @@ options:
 ### **Example Utilization**
 
 #### Linux
+this is two parts specifying the path to the firmware, and the second is to the connected device.
 
 ```bash
 python -m ectf25.utils.flash ./decoder/build_out/max78000.bin /dev/tty.usbmodem11302

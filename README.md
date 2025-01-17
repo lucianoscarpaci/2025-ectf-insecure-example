@@ -102,8 +102,8 @@ host design elements.
 This will generate a secrets file for channels 1, 3, and 4.
 
 ```bash
-mkdir secrets
-python -m ectf25_design.gen_secrets secrets/secrets.json 1 3 4
+mkdir /root/secrets
+python -m ectf25_design.gen_secrets /root/secrets/secrets.json 1 3 4
 ```
 
 ### Building the Decoder
@@ -150,7 +150,7 @@ options:
 This command will create a subscription file called subscription.bin targeting a device with ID 0xDEADBEEF, a start
 timestamp of 32, and an end timestamp of 128 for channel 1.
 
-#### Linux and PowerShell
+#### Linux
 
 ```bash
 python -m ectf25_design.gen_subscription secrets/secrets.json subscription.bin 0xDEADBEEF 32 128 1
@@ -332,7 +332,7 @@ options:
 
 ### **Example Utilization**
 
-#### Linux and PowerShell
+#### Linux
 
 ```bash
 python -m ectf25.satellite localhost 2000 localhost 1:2001

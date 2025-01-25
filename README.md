@@ -31,6 +31,7 @@ This repository holds the insecure example design for an eCTF Satellite TV Syste
             - `tester.py` - Utility for testing decoder
         - `satellite.py` - Broadcasts frames from uplink to all decoders
     - `pyproject.toml` - File that tells pip how to install this module
+- `reference/` - Example code for the chacha20-poly1305 encryption and decryption using libsodium in C and Ruby.
 
 ## Usage and Requirements
 

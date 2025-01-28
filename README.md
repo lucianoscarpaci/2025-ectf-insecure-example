@@ -82,16 +82,21 @@ design and tools directories. This file should not be modified.
 ```bash
 # Create a virtual environment in the root of the design
 cd /Users/lucianoscarpaci/Documents/GitHub/2025-ectf-insecure-example
-python3 -m venv .venv --prompt ectf-example
+# First time use do this asdf command
+asdf local python 3.11.0
+# Verify the python == 3.11
+python --version
+# Create the virtual environment
+python -m venv .venv --prompt ectf-example
 
 # Enable virtual environment
 . ./.venv/bin/activate
 
 # Install the host tools
-python3 -m pip install ./tools/
+python -m pip install ./tools/
 
 # Install the host design elements as an editable module
-python3 -m pip install -e ./design/
+python -m pip install -e ./design/
 ```
 
 ### Building the deployment
@@ -106,7 +111,7 @@ This will generate a secrets file for channels 1, 3, and 4.
 
 ```bash
 mkdir /root/secrets
-python3 -m ectf25_design.gen_secrets /root/secrets/secrets.json 1 3 4
+python -m ectf25_design.gen_secrets /root/secrets/secrets.json 1 3 4
 ```
 
 ### Building the Decoder

@@ -139,7 +139,7 @@ docker run --rm \
 
 #### Note: If the build is hanging indefinitely, try restarting Docker. If that does not resolve the issue, a system restart should fix the issue.
 
-## Generating Subscription Updates
+## Generating Subscription Updates [After flashing the decoder has been done.]
 
 Subscription updates are generated using the `gen_subscription.py` script.
 The `gen_subscription` function will be the only feature that teams will need to update.
@@ -169,10 +169,10 @@ timestamp of 32, and an end timestamp of 128 for channel 1.
 #### Linux
 
 ```bash
-python3 -m ectf25_design.gen_subscription secrets/secrets.json subscription.bin 0xDEADBEEF 32 128 1
+python -m ectf25_design.gen_subscription secrets/secrets.json subscription.bin 0xDEADBEEF 32 128 1
 ```
 
-## Flashing
+## Flashing [Decoder] Firmware
 
 Flashing the MAX78000 is done through the eCTF Bootloader. You will need to initially flash
 the eCTF Bootloader onto the provided hardware. The device must be in update mode in order for
@@ -192,11 +192,11 @@ options:
 
 ### **Example Utilization**
 
-#### Linux
+#### Mac
 this is two parts specifying the path to the firmware, and the second is to the connected device.
 
 ```bash
-python3 -m ectf25.utils.flash ./decoder/build_out/max78000.bin /dev/tty.usbmodem11302
+python -m ectf25.utils.flash ./decoder/build_out/max78000.bin /dev/tty.usbmodem14202
 ```
 
 #### PowerShell

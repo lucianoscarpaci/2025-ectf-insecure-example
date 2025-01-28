@@ -168,7 +168,7 @@ Change the directory to the decoder directory FIRST.
 This command will create a subscription file called subscription.bin targeting a device with ID 0xDEADBEEF, a start
 timestamp of 32, and an end timestamp of 128 for channel 1.
 
-#### Linux
+#### Mac
 
 ```bash
 python -m ectf25_design.gen_subscription ../secrets/secrets.json subscription_channel1.bin 0xdeadbeef 32 128 1
@@ -256,10 +256,13 @@ options:
 
 ### **Example Utilization**
 
-#### Linux
+#### Mac 
+
+After creating subscription channels, In the decoder directory run this command.
 
 ```bash
-python3 -m ectf25.tv.subscribe subscription.bin /dev/tty.usbmodem11302
+python -m ectf25.tv.subscribe subscription_channel1.bin /dev/tty.usbmodem14202
+python -m ectf25.tv.subscribe subscription_channel2.bin /dev/tty.usbmodem14202
 ```
 
 ### Tester Tool

@@ -344,7 +344,7 @@ options:
 #### Linux
 
 ```bash
-python3 -m ectf25.uplink secrets/secrets.json localhost 2000 1:10:frames/x_c0.json
+python -m ectf25.uplink secrets/secrets.json localhost 2000 0:1:frames/x_c0.json
 ```
 ### Satellite
 
@@ -370,7 +370,7 @@ options:
 #### Linux
 
 ```bash
-python3 -m ectf25.satellite localhost 2000 localhost 1:2001
+python -m ectf25.satellite localhost 2000 localhost 0:3000
 ```
 
 ### TV
@@ -397,5 +397,5 @@ options:
 #### Linux
 
 ```bash
-python3 -m ectf25.tv.run localhost 2001 /dev/tty.usbmodem11302
+ python -m ectf25.tv.run localhost 3000 /dev/tty.usbmodem14202
 ```

@@ -77,21 +77,21 @@ all of the required packages (ideally into a virtual environment). You can
 install packages from the included `pyproject.toml` file in the root of the
 design and tools directories. This file should not be modified.
 
-### Linux:
+### Mac:
 
 ```bash
 # Create a virtual environment in the root of the design
-cd <example_root>
-python -m venv .venv --prompt ectf-example
+cd /Users/lucianoscarpaci/Documents/GitHub/2025-ectf-insecure-example
+python3 -m venv .venv --prompt ectf-example
 
 # Enable virtual environment
 . ./.venv/bin/activate
 
 # Install the host tools
-python -m pip install ./tools/
+python3 -m pip install ./tools/
 
 # Install the host design elements as an editable module
-python -m pip install -e ./design/
+python3 -m pip install -e ./design/
 ```
 
 ### Building the deployment
@@ -106,7 +106,7 @@ This will generate a secrets file for channels 1, 3, and 4.
 
 ```bash
 mkdir /root/secrets
-python -m ectf25_design.gen_secrets /root/secrets/secrets.json 1 3 4
+python3 -m ectf25_design.gen_secrets /root/secrets/secrets.json 1 3 4
 ```
 
 ### Building the Decoder
@@ -156,7 +156,7 @@ timestamp of 32, and an end timestamp of 128 for channel 1.
 #### Linux
 
 ```bash
-python -m ectf25_design.gen_subscription secrets/secrets.json subscription.bin 0xDEADBEEF 32 128 1
+python3 -m ectf25_design.gen_subscription secrets/secrets.json subscription.bin 0xDEADBEEF 32 128 1
 ```
 
 ## Flashing
@@ -183,7 +183,7 @@ options:
 this is two parts specifying the path to the firmware, and the second is to the connected device.
 
 ```bash
-python -m ectf25.utils.flash ./decoder/build_out/max78000.bin /dev/tty.usbmodem11302
+python3 -m ectf25.utils.flash ./decoder/build_out/max78000.bin /dev/tty.usbmodem11302
 ```
 
 #### PowerShell
@@ -216,7 +216,7 @@ options:
 #### Linux
 
 ```bash
-python -m ectf25.tv.list /dev/tty.usbmodem11302
+python3 -m ectf25.tv.list /dev/tty.usbmodem11302
 ```
 
 ### Subscription Update Tool
@@ -243,7 +243,7 @@ options:
 #### Linux
 
 ```bash
-python -m ectf25.tv.subscribe subscription.bin /dev/tty.usbmodem11302
+python3 -m ectf25.tv.subscribe subscription.bin /dev/tty.usbmodem11302
 ```
 
 ### Tester Tool
@@ -285,7 +285,7 @@ options:
 #### Linux
 
 ```bash
-python -m ectf25.utils.tester --port /dev/tty.usbmodem11302 -s secrets/secrets.json rand -c 1 -f 64
+python3 -m ectf25.utils.tester --port /dev/tty.usbmodem11302 -s secrets/secrets.json rand -c 1 -f 64
 ```
 
 #### PowerShell
@@ -325,7 +325,7 @@ options:
 #### Linux
 
 ```bash
-python -m ectf25.uplink secrets/secrets.json localhost 2000 1:10:frames/x_c0.json
+python3 -m ectf25.uplink secrets/secrets.json localhost 2000 1:10:frames/x_c0.json
 ```
 ### Satellite
 
@@ -351,7 +351,7 @@ options:
 #### Linux
 
 ```bash
-python -m ectf25.satellite localhost 2000 localhost 1:2001
+python3 -m ectf25.satellite localhost 2000 localhost 1:2001
 ```
 
 ### TV
@@ -378,5 +378,5 @@ options:
 #### Linux
 
 ```bash
-python -m ectf25.tv.run localhost 2001 /dev/tty.usbmodem11302
+python3 -m ectf25.tv.run localhost 2001 /dev/tty.usbmodem11302
 ```

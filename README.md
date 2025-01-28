@@ -110,8 +110,8 @@ host design elements.
 This will generate a secrets file for channels 1, 3, and 4.
 
 ```bash
-mkdir /root/secrets
-python -m ectf25_design.gen_secrets /root/secrets/secrets.json 1 3 4
+mkdir secrets
+python -m ectf25_design.gen_secrets secrets/secrets.json 1 3 4
 ```
 
 ### Building the Decoder
@@ -121,10 +121,10 @@ The Decoder can be built next. The generated secrets will be available in the do
 These commands will generate a Decoder build with a Device ID 0xdeadbeef. Build outputs are copied to the `build_out`
 directory.
 
-### Linux:
+### Mac:
 
 ```bash
-cd <example_root>/decoder
+cd /Users/lucianoscarpaci/Documents/GitHub/2025-ectf-insecure-example/decoder/
 docker build -t decoder .
 docker run --rm -v ./build_out:/out -v ./:/decoder -v ./../secrets:/secrets -e DECODER_ID=0xdeadbeef decoder
 ```

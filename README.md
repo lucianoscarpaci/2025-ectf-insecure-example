@@ -126,7 +126,15 @@ directory.
 ```bash
 cd /Users/lucianoscarpaci/Documents/GitHub/2025-ectf-insecure-example/decoder/
 docker build -t decoder .
-docker run --rm -v ./build_out:/out -v ./:/decoder -v ./../secrets:/secrets -e DECODER_ID=0xdeadbeef decoder
+# Verify the docker image
+docker image ls
+# The volume commands specify the directories to mount to the container
+docker run --rm \
+  -v "$(pwd)/./build_out:/out" \
+  -v "$(pwd)/./:/decoder" \
+  -v "$(pwd)/./../secrets:/secrets" \
+  -e DECODER_ID=0xdeadbeef \
+  decoder
 ```
 
 #### Note: If the build is hanging indefinitely, try restarting Docker. If that does not resolve the issue, a system restart should fix the issue.

@@ -163,13 +163,16 @@ options:
 
 ### **Example Utilization**
 
+Change the directory to the decoder directory FIRST.
+
 This command will create a subscription file called subscription.bin targeting a device with ID 0xDEADBEEF, a start
 timestamp of 32, and an end timestamp of 128 for channel 1.
 
 #### Linux
 
 ```bash
-python -m ectf25_design.gen_subscription secrets/secrets.json subscription.bin 0xDEADBEEF 32 128 1
+python -m ectf25_design.gen_subscription ../secrets/secrets.json subscription_channel1.bin 0xdeadbeef 32 128 1
+python -m ectf25_design.gen_subscription ../secrets/secrets.json subscription_channel2.bin 0xdeadbeef 32 128 2
 ```
 
 ## Flashing [Decoder] Firmware

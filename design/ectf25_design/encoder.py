@@ -31,7 +31,13 @@ class Encoder:
 
         # Load the example secrets for use in Encoder.encode
         # This will be "EXAMPLE" in the reference design"
-        self.some_secrets = secrets["some_secrets"]
+        '''
+        self.sha256_key = secrets["sha256_key"]
+        self.sha512_key = secrets["sha512_key"]
+        self.sha3_256_key = secrets["sha3_256_key"]
+        '''
+        self.public_key = secrets["public_key"]
+        self.signed_message = secrets["signed_message"]
 
     def encode(self, channel: int, frame: bytes, timestamp: int) -> bytes:
         """The frame encoder function

@@ -172,7 +172,8 @@ timestamp of 32, and an end timestamp of 128 for channel 1.
 
 ```bash
 python -m ectf25_design.gen_subscription ../secrets/secrets.json subscription_channel1.bin 0xdeadbeef 32 128 1
-python -m ectf25_design.gen_subscription ../secrets/secrets.json subscription_channel2.bin 0xdeadbeef 32 128 2
+python -m ectf25_design.gen_subscription ../secrets/secrets.json subscription_channel3.bin 0xdeadbeef 32 128 3
+python -m ectf25_design.gen_subscription ../secrets/secrets.json subscription_channel4.bin 0xdeadbeef 32 128 4
 ```
 
 ## Flashing [Decoder] Firmware
@@ -232,7 +233,7 @@ options:
 #### Linux
 
 ```bash
-python3 -m ectf25.tv.list /dev/tty.usbmodem11302
+python -m ectf25.tv.list /dev/tty.usbmodem14202
 ```
 
 ### Subscription Update Tool
@@ -262,7 +263,8 @@ After creating subscription channels, In the decoder directory run this command.
 
 ```bash
 python -m ectf25.tv.subscribe subscription_channel1.bin /dev/tty.usbmodem14202
-python -m ectf25.tv.subscribe subscription_channel2.bin /dev/tty.usbmodem14202
+python -m ectf25.tv.subscribe subscription_channel3.bin /dev/tty.usbmodem14202
+python -m ectf25.tv.subscribe subscription_channel4.bin /dev/tty.usbmodem14202
 ```
 
 ### Tester Tool
@@ -301,10 +303,16 @@ options:
 
 ### **Example Utilization**
 
-#### Linux
+#### Mac
+
+This is very important! This will check the security whether it is correct or not.
+The below checks for channel 1. It should return subscription because we subscribed to it
+already earler. Now change the -c argument to 2 and it should crash because we didnt subscribe to 
+channel 2. Changing the channel to 3 and 4 should work because we made a subscription to 
+channels 3 and 4.
 
 ```bash
-python3 -m ectf25.utils.tester --port /dev/tty.usbmodem11302 -s secrets/secrets.json rand -c 1 -f 64
+python -m ectf25.utils.tester --port /dev/tty.usbmodem14202 -s secrets/secrets.json rand -c 1 -f 64
 ```
 
 #### PowerShell
@@ -344,7 +352,7 @@ options:
 #### Linux
 
 ```bash
-python -m ectf25.uplink secrets/secrets.json localhost 2000 0:1:frames/x_c0.json
+python -m ectf25.uplink secrets/secrets.json localhost 2000 1:1:frames/x_c0.json
 ```
 ### Satellite
 
@@ -370,7 +378,7 @@ options:
 #### Linux
 
 ```bash
-python -m ectf25.satellite localhost 2000 localhost 0:3000
+python -m ectf25.satellite localhost 2000 localhost 1:3000
 ```
 
 ### TV

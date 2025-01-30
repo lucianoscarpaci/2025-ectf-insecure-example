@@ -12,8 +12,11 @@ Copyright: Copyright (c) 2025 The MITRE Corporation
 
 import argparse
 import json
+import secrets
+import hashlib
+import base64
+from nacl.signing import SigningKey
 from pathlib import Path
-
 from loguru import logger
 
 
@@ -35,15 +38,61 @@ def gen_secrets(channels: list[int]) -> bytes:
     # Create the secrets object
     # You can change this to generate any secret material
     # The secrets file will never be shared with attackers
-    secrets = {
+    '''
+    # Generate random bytes
+    random_bytes = secrets.token_bytes(16)
+    # Hash using SHA-256
+    sha256_hash = hashlib.sha256(random_bytes).digest()
+    sha256_key = base64.b64encode(sha256_hash).decode('utf-8')
+    # Hash using SHA-512
+    sha512_hash = hashlib.sha512(random_bytes).digest()
+    sha512_key = base64.b64encode(sha512_hash).decode('utf-8')
+    # Hash using SHA-3-256
+    sha3_256_hash = hashlib.sha3_256(random_bytes).digest()
+    sha3_256_key = base64.b64encode(sha3_256_hash).decode('utf-8')
+
+    # Change the "some_secrets"
+    secrets_dict = {
         "channels": channels,
-        "some_secrets": "EXAMPLE",
+        "sha256_key": sha256_key,
+        "sha512_key": sha512_key,
+        "sha3_256_key": sha3_256_key,
     }
 
     # NOTE: if you choose to use JSON for your file type, you will not be able to
     # store binary data, and must either use a different file type or encode the
     # binary data to hex, base64, or another type of ASCII-only encoding
-    return json.dumps(secrets).encode()
+    return json.dumps(secrets_dict).encode()
+    '''
+    # Generate random bytes
+    random_bytes = secrets.token_bytes(16)
+    # Hash using SHA-256
+    sha256_hash = hashlib.sha256(random_bytes).digest()
+    sha256_key = base64.b64encode(sha256_hash).decode('utf-8')
+    # Hash using SHA-3-256
+    sha3_256_hash = hashlib.sha3_256(random_bytes).digest()
+    sha3_256_key = base64.b64encode(sha3_256_hash).decode('utf-8')
+    # Change the "some_secrets"
+    secrets_dict = {
+        "channels": channels,
+        "sha256_key": sha256_key,
+        "sha3_256_key": sha3_256_key,
+    }
+    # Convert secrets_dict to JSON string
+    secrets_json = json.dumps(secrets_dict).encode()
+    # Generate a new signing key
+    signing_key = SigningKey.generate()
+    # Sign the JSON string
+    signed_message = signing_key.sign(secrets_json)
+    # result including channels, public key, and signed message
+    result = {
+        "channels": channels,
+        "public_key": base64.b64encode(signing_key.verify_key.encode()).decode('utf-8'),
+        "signed_message": base64.b64encode(signed_message).decode('utf-8'),
+    }
+    return json.dumps(result).encode()
+
+
 
 
 def parse_args():

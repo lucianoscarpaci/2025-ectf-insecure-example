@@ -32,66 +32,25 @@ def gen_secrets(channels: list[int]) -> bytes:
 
     :returns: Contents of the secrets file
     """
-    # TODO: Update this function to generate any system-wide secrets needed by
-    #   your design
-
-    # Create the secrets object
-    # You can change this to generate any secret material
-    # The secrets file will never be shared with attackers
-    '''
-    # Generate random bytes
-    random_bytes = secrets.token_bytes(16)
-    # Hash using SHA-256
-    sha256_hash = hashlib.sha256(random_bytes).digest()
-    sha256_key = base64.b64encode(sha256_hash).decode('utf-8')
-    # Hash using SHA-512
-    sha512_hash = hashlib.sha512(random_bytes).digest()
-    sha512_key = base64.b64encode(sha512_hash).decode('utf-8')
-    # Hash using SHA-3-256
-    sha3_256_hash = hashlib.sha3_256(random_bytes).digest()
-    sha3_256_key = base64.b64encode(sha3_256_hash).decode('utf-8')
-
-    # Change the "some_secrets"
-    secrets_dict = {
-        "channels": channels,
-        "sha256_key": sha256_key,
-        "sha512_key": sha512_key,
-        "sha3_256_key": sha3_256_key,
-    }
-
-    # NOTE: if you choose to use JSON for your file type, you will not be able to
-    # store binary data, and must either use a different file type or encode the
-    # binary data to hex, base64, or another type of ASCII-only encoding
-    return json.dumps(secrets_dict).encode()
-    '''
-    # Generate random bytes
-    random_bytes = secrets.token_bytes(16)
-    # Hash using SHA-256
-    sha256_hash = hashlib.sha256(random_bytes).digest()
-    sha256_key = base64.b64encode(sha256_hash).decode('utf-8')
-    # Hash using SHA-3-256
-    sha3_256_hash = hashlib.sha3_256(random_bytes).digest()
-    sha3_256_key = base64.b64encode(sha3_256_hash).decode('utf-8')
-    # Change the "some_secrets"
-    secrets_dict = {
-        "channels": channels,
-        "sha256_key": sha256_key,
-        "sha3_256_key": sha3_256_key,
-    }
-    # Convert secrets_dict to JSON string
-    secrets_json = json.dumps(secrets_dict).encode()
-    # Generate a new signing key
-    signing_key = SigningKey.generate()
-    # Sign the JSON string
-    signed_message = signing_key.sign(secrets_json)
-    # result including channels, public key, and signed message
-    result = {
-        "channels": channels,
-        "public_key": base64.b64encode(signing_key.verify_key.encode()).decode('utf-8'),
-        "signed_message": base64.b64encode(signed_message).decode('utf-8'),
-    }
+    try:
+        # Generate random bytes
+        random_bytes = secrets.token_bytes(13)
+        # Encode the random bytes in Base64
+        crypto_key = base64.b64encode(random_bytes).decode('utf-8')
+        # Generate a new ED25519 signing key
+        signing_key = SigningKey.generate()
+        # Signs the Base64-encoded crypto key using the signing key
+        signed_message = signing_key.sign(crypto_key.encode())
+        # result including channels, public key, and signed message
+        result = {
+            "channels": channels,
+            "public_key": base64.b64encode(signing_key.verify_key.encode()).decode('utf-8'),
+            "signed_message": base64.b64encode(signed_message).decode('utf-8'),
+        }
+    except Exception as e:
+        print(f"An error occured while generating secrets: {e}")
+        raise
     return json.dumps(result).encode()
-
 
 
 

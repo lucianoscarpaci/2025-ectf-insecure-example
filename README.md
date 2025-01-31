@@ -171,9 +171,9 @@ timestamp of 32, and an end timestamp of 128 for channel 1.
 #### Mac
 
 ```bash
-python -m ectf25_design.gen_subscription ../secrets/secrets.json subscription_channel1.bin 0xdeadbeef 32 128 1
-python -m ectf25_design.gen_subscription ../secrets/secrets.json subscription_channel3.bin 0xdeadbeef 32 128 3
-python -m ectf25_design.gen_subscription ../secrets/secrets.json subscription_channel4.bin 0xdeadbeef 32 128 4
+python -m ectf25_design.gen_subscription ../secrets/secrets.json subscription_1.bin 0xdeadbeef 32 128 1
+python -m ectf25_design.gen_subscription ../secrets/secrets.json subscription_2.bin 0xdeadbeef 32 128 2
+python -m ectf25_design.gen_subscription ../secrets/secrets.json subscription_3.bin 0xdeadbeef 32 128 3
 ```
 
 ## Flashing [Decoder] Firmware
@@ -262,9 +262,9 @@ options:
 After creating subscription channels, In the decoder directory run this command.
 
 ```bash
-python -m ectf25.tv.subscribe subscription_channel1.bin /dev/tty.usbmodem14202
-python -m ectf25.tv.subscribe subscription_channel3.bin /dev/tty.usbmodem14202
-python -m ectf25.tv.subscribe subscription_channel4.bin /dev/tty.usbmodem14202
+python -m ectf25.tv.subscribe subscription_1.bin /dev/tty.usbmodem14202
+python -m ectf25.tv.subscribe subscription_2.bin /dev/tty.usbmodem14202
+python -m ectf25.tv.subscribe subscription_3.bin /dev/tty.usbmodem14202
 ```
 
 ### Tester Tool

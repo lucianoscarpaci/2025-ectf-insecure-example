@@ -14,8 +14,11 @@ import argparse
 import json
 from pathlib import Path
 import struct
-
+import base64
 from loguru import logger
+from nacl.signing import VerifyKey
+from nacl.exceptions import BadSignatureError
+import hashlib
 
 
 def gen_subscription(
@@ -40,10 +43,32 @@ def gen_subscription(
     # You can use secrets generated using `gen_secrets` here like:
     # secrets["some_secrets"]
     # Which would return "EXAMPLE" in the reference design.
-    # Please note that the secrets are READ ONLY at this sage!
+    public_key = secrets["public_key"]
+    signed_message = secrets["signed_message"]
+
+    try:
+    # Decode the public key and signed message from Base64
+        public_key_bytes = base64.b64decode(public_key)
+        signed_message_bytes = base64.b64decode(signed_message)
+
+        # Create a VerifyKey object from the public key
+        verify_key = VerifyKey(public_key_bytes)
+
+        # Verify the signed message
+        verify_key.verify(signed_message_bytes)
+        logger.success(f"PASSED: The ED25519 signature is valid.")
+    except BadSignatureError:
+        logger.error(f"FAILED: The ED25519 signature is invalid.")
+        raise
+    except Exception as e:
+        logger.error(f"An error occurred during verification: {e}")
+        raise
+
+    header_data = struct.pack("<IQQI", device_id, start, end, channel)
+    encoded_frame = hashlib.sha256(header_data).digest()
 
     # Pack the subscription. This will be sent to the decoder with ectf25.tv.subscribe
-    return struct.pack("<IQQI", device_id, start, end, channel)
+    return encoded_frame
 
 
 def parse_args():

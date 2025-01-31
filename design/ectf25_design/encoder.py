@@ -13,7 +13,11 @@ Copyright: Copyright (c) 2025 The MITRE Corporation
 import argparse
 import struct
 import json
-
+import base64
+from nacl.signing import VerifyKey
+from nacl.exceptions import BadSignatureError
+from loguru import logger
+import hashlib
 
 class Encoder:
     def __init__(self, secrets: bytes):
@@ -31,13 +35,9 @@ class Encoder:
 
         # Load the example secrets for use in Encoder.encode
         # This will be "EXAMPLE" in the reference design"
-        '''
-        self.sha256_key = secrets["sha256_key"]
-        self.sha512_key = secrets["sha512_key"]
-        self.sha3_256_key = secrets["sha3_256_key"]
-        '''
         self.public_key = secrets["public_key"]
         self.signed_message = secrets["signed_message"]
+
 
     def encode(self, channel: int, frame: bytes, timestamp: int) -> bytes:
         """The frame encoder function
@@ -57,8 +57,23 @@ class Encoder:
 
         :returns: The encoded frame, which will be sent to the Decoder
         """
-        # TODO: encode the satellite frames so that they meet functional and
-        #  security requirements
+        try:
+        # Decode the public key and signed message from Base64
+            public_key_bytes = base64.b64decode(self.public_key)
+            signed_message_bytes = base64.b64decode(self.signed_message)
+
+            # Create a VerifyKey object from the public key
+            verify_key = VerifyKey(public_key_bytes)
+
+            # Verify the signed message
+            verify_key.verify(signed_message_bytes)
+            logger.success(f"PASSED: The ED25519 signature is valid.")
+        except BadSignatureError:
+            logger.error(f"FAILED: The ED25519 signature is invalid.")
+            raise
+        except Exception as e:
+            logger.error(f"An error occurred during verification: {e}")
+            raise
 
         return struct.pack("<IQ", channel, timestamp) + frame
 

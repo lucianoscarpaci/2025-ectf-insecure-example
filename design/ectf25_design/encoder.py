@@ -37,6 +37,32 @@ class Encoder:
         # This will be "EXAMPLE" in the reference design"
         self.public_key = secrets["public_key"]
         self.signed_message = secrets["signed_message"]
+        self.validate_secrets()
+
+    def validate_secrets(self):
+        """Validate the secrets file
+
+        This function will be called after the secrets file is loaded. You should
+        raise an exception if the secrets are invalid
+        """
+        try:
+        # Decode the public key and signed message from Base64
+            public_key_bytes = base64.b64decode(self.public_key)
+            signed_message_bytes = base64.b64decode(self.signed_message)
+
+            # Create a VerifyKey object from the public key
+            verify_key = VerifyKey(public_key_bytes)
+
+            # Verify the signed message
+            verify_key.verify(signed_message_bytes)
+            logger.success(f"PASSED: The ED25519 signature is valid.")
+        except BadSignatureError:
+            logger.error(f"FAILED: The ED25519 signature is invalid.")
+            raise
+        except Exception as e:
+            logger.error(f"An error occurred during verification: {e}")
+            raise
+
 
 
     def encode(self, channel: int, frame: bytes, timestamp: int) -> bytes:
@@ -57,24 +83,6 @@ class Encoder:
 
         :returns: The encoded frame, which will be sent to the Decoder
         """
-        try:
-        # Decode the public key and signed message from Base64
-            public_key_bytes = base64.b64decode(self.public_key)
-            signed_message_bytes = base64.b64decode(self.signed_message)
-
-            # Create a VerifyKey object from the public key
-            verify_key = VerifyKey(public_key_bytes)
-
-            # Verify the signed message
-            verify_key.verify(signed_message_bytes)
-            logger.success(f"PASSED: The ED25519 signature is valid.")
-        except BadSignatureError:
-            logger.error(f"FAILED: The ED25519 signature is invalid.")
-            raise
-        except Exception as e:
-            logger.error(f"An error occurred during verification: {e}")
-            raise
-
         return struct.pack("<IQ", channel, timestamp) + frame
 
 
@@ -84,7 +92,7 @@ def main():
     This function is only for your convenience and will not be used in the final design.
 
     After pip-installing, you should be able to call this with:
-        python3 -m ectf25_design.encoder path/to/test.secrets 1 "frame to encode" 100
+        python -m ectf25_design.encoder path/to/test.secrets 1 "frame to encode" 100
     """
     parser = argparse.ArgumentParser(prog="ectf25_design.encoder")
     parser.add_argument(

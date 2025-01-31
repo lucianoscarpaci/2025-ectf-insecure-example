@@ -19,6 +19,7 @@ from loguru import logger
 from nacl.signing import VerifyKey
 from nacl.exceptions import BadSignatureError
 import hashlib
+import os
 
 
 def gen_subscription(
@@ -64,7 +65,8 @@ def gen_subscription(
         logger.error(f"An error occurred during verification: {e}")
         raise
 
-    header_data = struct.pack("<IQQI", device_id, start, end, channel)
+    nonce = os.urandom(16)
+    header_data = struct.pack("<IQQI16s", device_id, start, end, channel, nonce)
     encoded_frame = hashlib.sha256(header_data).digest()
 
     # Pack the subscription. This will be sent to the decoder with ectf25.tv.subscribe

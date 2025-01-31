@@ -34,7 +34,7 @@ def gen_secrets(channels: list[int]) -> bytes:
     """
     try:
         # Generate random bytes
-        random_bytes = secrets.token_bytes(13)
+        random_bytes = secrets.token_bytes(16)
         # Encode the random bytes in Base64
         crypto_key = base64.b64encode(random_bytes).decode('utf-8')
         # Generate a new ED25519 signing key

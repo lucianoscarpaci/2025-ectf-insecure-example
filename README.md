@@ -312,7 +312,7 @@ channel 2. Changing the channel to 3 and 4 should work because we made a subscri
 channels 3 and 4.
 
 ```bash
-python -m ectf25.utils.tester --port /dev/tty.usbmodem14202 -s secrets/secrets.json rand -c 1 -f 64
+python -m ectf25.utils.tester --port /dev/tty.usbmodem14202 -s secrets/secrets.json rand -c 1707767297 -f 64
 ```
 
 #### PowerShell
@@ -352,7 +352,7 @@ options:
 #### Linux
 
 ```bash
-python -m ectf25.uplink secrets/secrets.json localhost 2000 1:1:frames/x_c0.json
+python -m ectf25.uplink secrets/secrets.json localhost 2000 1:30:frames/x_c0.json
 ```
 ### Satellite
 

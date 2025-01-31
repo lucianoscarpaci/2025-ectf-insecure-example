@@ -19,7 +19,7 @@ from loguru import logger
 from nacl.signing import VerifyKey
 from nacl.exceptions import BadSignatureError
 import hashlib
-import secrets
+import os
 
 
 def gen_subscription(
@@ -65,7 +65,7 @@ def gen_subscription(
         logger.error(f"An error occurred during verification: {e}")
         raise
 
-    random_bytes = secrets.token_bytes(16)
+    random_bytes = os.urandom(16)
     header_data = struct.pack("<IQQI16s", device_id, start, end, channel, random_bytes)
     encoded_frame = hashlib.sha256(header_data).digest()
 

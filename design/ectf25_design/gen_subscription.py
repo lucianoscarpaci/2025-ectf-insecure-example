@@ -64,9 +64,11 @@ def gen_subscription(
     except Exception as e:
         logger.error(f"An error occurred during verification: {e}")
         raise
-
-    random_bytes = os.urandom(16)
-    header_data = struct.pack("<IQQI16s", device_id, start, end, channel, random_bytes)
+    # Generate random bytes
+    nonce = os.urandom(16)
+    # Pack the header data < little endian, I unsigned int, Q unsigned long long, 16s 16 byte string
+    header_data = struct.pack("<IQQI16s", device_id, start, end, channel, nonce)
+    # Hash the packed data
     encoded_frame = hashlib.sha256(header_data).digest()
 
     # Pack the subscription. This will be sent to the decoder with ectf25.tv.subscribe

@@ -34,13 +34,11 @@ def gen_secrets(channels: list[int]) -> bytes:
     """
     try:
         # Generate random bytes
-        random_bytes = secrets.token_bytes(16)
-        # Encode the random bytes in Base64
-        crypto_key = base64.b64encode(random_bytes).decode('utf-8')
+        nonce = secrets.token_bytes(16)
         # Generate a new ED25519 signing key
         signing_key = SigningKey.generate()
-        # Signs the Base64-encoded crypto key using the signing key
-        signed_message = signing_key.sign(crypto_key.encode())
+        # Signs the nonce using the signing key
+        signed_message = signing_key.sign(nonce)
         # result including channels, public key, and signed message
         result = {
             "channels": channels,

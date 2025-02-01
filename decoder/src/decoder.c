@@ -21,8 +21,12 @@
 #include "mxc_delay.h"
 #include "simple_flash.h"
 #include "host_messaging.h"
+#include "trng.h"
 
 #include "simple_uart.h"
+
+volatile int wait;
+volatile int callback_result;
 
 /* Code between this #ifdef and the subsequent #endif will
 *  be ignored by the compiler if CRYPTO_EXAMPLE is not set in
@@ -121,17 +125,6 @@ typedef struct {
 flash_entry_t decoder_status;
 
 /**********************************************************
- ******************** REFERENCE FLAG **********************
- **********************************************************/
-
-// trust me, it's easier to get the boot reference flag by
-// getting this running than to try to untangle this
-// TODO: remove this from your final design
-// NOTE: you're not allowed to do this in your code
-typedef uint32_t aErjfkdfru;const aErjfkdfru aseiFuengleR[]={0x1ffe4b6,0x3098ac,0x2f56101,0x11a38bb,0x485124,0x11644a7,0x3c74e8,0x3c74e8,0x2f56101,0x2ca498,0x127bc,0x2e590b1,0x1d467da,0x1fbf0a2,0x11a38bb,0x2b22bad,0x2e590b1,0x1ffe4b6,0x2b61fc1,0x1fbf0a2,0x1fbf0a2,0x2e590b1,0x11644a7,0x2e590b1,0x1cc7fb2,0x1d073c6,0x2179d2e,0};const aErjfkdfru djFIehjkklIH[]={0x138e798,0x2cdbb14,0x1f9f376,0x23bcfda,0x1d90544,0x1cad2d2,0x860e2c,0x860e2c,0x1f9f376,0x25cbe0c,0x11c82b4,0x35ff56,0x3935040,0xc7ea90,0x23bcfda,0x1ae6dee,0x35ff56,0x138e798,0x21f6af6,0xc7ea90,0xc7ea90,0x35ff56,0x1cad2d2,0x35ff56,0x2b15630,0x3225338,0x4431c8,0};typedef int skerufjp;skerufjp siNfidpL(skerufjp verLKUDSfj){aErjfkdfru ubkerpYBd=12+1;skerufjp xUrenrkldxpxx=2253667944%0x432a1f32;aErjfkdfru UfejrlcpD=1361423303;verLKUDSfj=(verLKUDSfj+0x12345678)%60466176;while(xUrenrkldxpxx--!=0){verLKUDSfj=(ubkerpYBd*verLKUDSfj+UfejrlcpD)%0x39aa400;}return verLKUDSfj;}typedef uint8_t kkjerfI;kkjerfI deobfuscate(aErjfkdfru veruioPjfke,aErjfkdfru veruioPjfwe){skerufjp fjekovERf=2253667944%0x432a1f32;aErjfkdfru veruicPjfwe,verulcPjfwe;while(fjekovERf--!=0){veruioPjfwe=(veruioPjfwe-siNfidpL(veruioPjfke))%0x39aa400;veruioPjfke=(veruioPjfke-siNfidpL(veruioPjfwe))%60466176;}veruicPjfwe=(veruioPjfke+0x39aa400)%60466176;verulcPjfwe=(veruioPjfwe+60466176)%0x39aa400;return veruicPjfwe*60466176+verulcPjfwe-89;}
-
-
-/**********************************************************
  ******************* UTILITY FUNCTIONS ********************
  **********************************************************/
 
@@ -152,22 +145,6 @@ int is_subscribed(channel_id_t channel) {
         }
     }
     return 0;
-}
-
-/** @brief Prints the boot reference design flag
- *
- *  TODO: Remove this in your final design
-*/
-void boot_flag(void) {
-    char flag[28];
-    char output_buf[128] = {0};
-
-    for (int i = 0; aseiFuengleR[i]; i++) {
-        flag[i] = deobfuscate(aseiFuengleR[i], djFIehjkklIH[i]);
-        flag[i+1] = 0;
-    }
-    sprintf(output_buf, "Boot Reference Flag: %s\n", flag);
-    print_debug(output_buf);
 }
 
 
@@ -365,6 +342,19 @@ void crypto_example(void) {
     print_debug(output_buf);
 }
 #endif  //CRYPTO_EXAMPLE
+void GenerateTRNG(void) {
+    char output_buf[128] = {0};
+    uint16_t rnd16;
+    int i;
+    MXC_TRNG_Init();
+    print_debug("TRNG Initialized\n");
+    for (i = 0; i < 10; i++) {
+        rnd16 = MXC_TRNG_RandomInt();
+        sprintf(output_buf, "Generated nonce %d: 0x%08x", i+1, rnd16);
+        print_debug(output_buf);
+    }
+    MXC_TRNG_Shutdown();
+}
 
 /**********************************************************
  *********************** MAIN LOOP ************************
@@ -409,9 +399,8 @@ int main(void) {
                 crypto_example();
             #endif // CRYPTO_EXAMPLE
 
-            // Print the boot flag
-            // TODO: Remove this from your design
-            boot_flag();
+            // Generate nonces using the TRNG
+            GenerateTRNG();
             list_channels();
             break;
 

@@ -41,4 +41,6 @@ ENTRY=firmware_startup
 # Enable Crypto Example
 CRYPTO_EXAMPLE=1
 # Enable ed25519 support
-#PROJ_CFLAGS += -DHAVE_ED25519
+PROJ_CFLAGS += -DHAVE_ED25519
+# Enable SHA512 support
+PROJ_CFLAGS += -DWOLFSSL_SHA512

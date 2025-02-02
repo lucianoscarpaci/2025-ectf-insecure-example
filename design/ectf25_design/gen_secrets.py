@@ -39,14 +39,17 @@ def gen_secrets(channels: list[int]) -> bytes:
         signing_key = SigningKey.generate()
         # Signs the nonce using the signing key
         signed_message = signing_key.sign(nonce)
-        # result including channels, public key, and signed message
+        # Extract signature (ED25519) from signed message
+        signature = signed_message.signature
+        # result including channels, nonce, public key, and signature
         result = {
             "channels": channels,
+            "nonce": base64.b64encode(nonce).decode('utf-8'),
             "public_key": base64.b64encode(signing_key.verify_key.encode()).decode('utf-8'),
-            "signed_message": base64.b64encode(signed_message).decode('utf-8'),
+            "signature": base64.b64encode(signature).decode('utf-8'),
         }
     except Exception as e:
-        print(f"An error occured while generating secrets: {e}")
+        logger.error(f"An error occured while generating secrets: {e}")
         raise
     return json.dumps(result).encode()
 

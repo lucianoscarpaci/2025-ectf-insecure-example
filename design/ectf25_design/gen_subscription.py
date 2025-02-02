@@ -21,7 +21,6 @@ from nacl.exceptions import BadSignatureError
 import hashlib
 import os
 
-
 def gen_subscription(
     secrets: bytes, device_id: int, start: int, end: int, channel: int
 ) -> bytes:
@@ -36,43 +35,33 @@ def gen_subscription(
     :param channel: Channel to enable
     """
     # TODO: Update this function to provide a Decoder with whatever data it needs to
-    #   subscribe to a new channel
-
-    # Load the json of the secrets file
+    #   subscribe to a new channel. This function will be called by the Encoder
     secrets = json.loads(secrets)
-
-    # You can use secrets generated using `gen_secrets` here like:
-    # secrets["some_secrets"]
-    # Which would return "EXAMPLE" in the reference design.
+    nonce = secrets["nonce"]
     public_key = secrets["public_key"]
-    signed_message = secrets["signed_message"]
-
+    signature = secrets["signature"]
+    # ED25519 signature verification
     try:
-    # Decode the public key and signed message from Base64
-        public_key_bytes = base64.b64decode(public_key)
-        signed_message_bytes = base64.b64decode(signed_message)
+        # Decode the nonce, public key and signature from Base64
+        nonce = base64.b64decode(nonce)
+        public_key = base64.b64decode(public_key)
+        signature = base64.b64decode(signature)
 
         # Create a VerifyKey object from the public key
-        verify_key = VerifyKey(public_key_bytes)
+        verify_key = VerifyKey(public_key)
 
         # Verify the signed message
-        verify_key.verify(signed_message_bytes)
+        verify_key.verify(nonce, signature)
         logger.success(f"PASSED: The ED25519 signature is valid.")
     except BadSignatureError:
         logger.error(f"FAILED: The ED25519 signature is invalid.")
         raise
     except Exception as e:
-        logger.error(f"An error occurred during verification: {e}")
+        logger.error(f"An error occured while verifying the ED25519 signature: {e}")
         raise
-    # Generate random bytes
-    nonce = os.urandom(16)
-    # Pack the header data < little endian, I unsigned int, Q unsigned long long, 16s 16 byte string
-    header_data = struct.pack("<IQQI16s", device_id, start, end, channel, nonce)
-    # Hash the packed data
-    encoded_frame = hashlib.sha256(header_data).digest()
 
-    # Pack the subscription. This will be sent to the decoder with ectf25.tv.subscribe
-    return encoded_frame
+    subscription_bytes = struct.pack("<IQQI", device_id, start, end, channel)
+    return subscription_bytes
 
 
 def parse_args():

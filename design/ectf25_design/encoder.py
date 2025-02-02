@@ -35,8 +35,10 @@ class Encoder:
 
         # Load the example secrets for use in Encoder.encode
         # This will be "EXAMPLE" in the reference design"
+        self.nonce = secrets["nonce"]
         self.public_key = secrets["public_key"]
-        self.signed_message = secrets["signed_message"]
+        self.signature = secrets["signature"]
+
         self.validate_secrets()
 
     def validate_secrets(self):
@@ -46,15 +48,16 @@ class Encoder:
         raise an exception if the secrets are invalid
         """
         try:
-        # Decode the public key and signed message from Base64
-            public_key_bytes = base64.b64decode(self.public_key)
-            signed_message_bytes = base64.b64decode(self.signed_message)
+        # Decode the nonce, public key and signature from Base64
+            nonce = base64.b64decode(self.nonce)
+            public_key = base64.b64decode(self.public_key)
+            signature = base64.b64decode(self.signature)
 
             # Create a VerifyKey object from the public key
-            verify_key = VerifyKey(public_key_bytes)
+            verify_key = VerifyKey(public_key)
 
             # Verify the signed message
-            verify_key.verify(signed_message_bytes)
+            verify_key.verify(nonce, signature)
             logger.success(f"PASSED: The ED25519 signature is valid.")
         except BadSignatureError:
             logger.error(f"FAILED: The ED25519 signature is invalid.")
@@ -83,7 +86,9 @@ class Encoder:
 
         :returns: The encoded frame, which will be sent to the Decoder
         """
-        return struct.pack("<IQ", channel, timestamp) + frame
+        original_bytes = struct.pack("<IQ", channel, timestamp)
+        encoded_frame = original_bytes + frame
+        return encoded_frame
 
 
 def main():

@@ -239,16 +239,13 @@ int decode(pkt_len_t pkt_len, frame_packet_t *new_frame) {
     // Frame size is the size of the packet minus the size of non-frame elements
     frame_size = pkt_len - (sizeof(new_frame->channel) + sizeof(new_frame->timestamp));
     channel = new_frame->channel;
-
-    // The reference design doesn't use the timestamp, but you may want to in your design
-    // timestamp_t timestamp = new_frame->timestamp;
-
     // Check that we are subscribed to the channel...
     print_debug("Checking subscription\n");
     if (is_subscribed(channel)) {
         print_debug("Subscription Valid\n");
         /* The reference design doesn't need any extra work to decode, but your design likely will.
         *  Do any extra decoding here before returning the result to the host. */
+       // only the channel and timestamp are encoded, the frame is not encoded.
         write_packet(DECODE_MSG, new_frame->data, frame_size);
         return 0;
     } else {

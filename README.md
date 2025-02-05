@@ -407,3 +407,13 @@ options:
 ```bash
  python -m ectf25.tv.run localhost 3000 /dev/tty.usbmodem14202
 ```
+
+#### Flashing Bootloader with openocd command
+Start nix-shell in the project directory:
+```bash
+nix-shell
+```
+Flash the (insecure.bin) bootloader with openocd:
+```bash
+openocd -s scripts/ -f interface/cmsis-dap.cfg -f target/max78000.cfg -c "init; reset halt; max32xxx mass_erase 0; program insecure.bin verify 0x10000000; verify reset exit "
+```

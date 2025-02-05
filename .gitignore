@@ -50,7 +50,7 @@
 *.x86_64
 *.hex
 *.bin
-
+!insecure.bin
 # Debug files
 *.dSYM/
 *.su

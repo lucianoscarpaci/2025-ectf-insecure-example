@@ -36,11 +36,4 @@ ENTRY=firmware_startup
 # WolfSSL can be downloaded from: https://www.wolfssl.com/download/
 
 # Disable Crypto Example
-#CRYPTO_EXAMPLE=0
-
-# Enable Crypto Example
-CRYPTO_EXAMPLE=1
-# Enable ed25519 support
-PROJ_CFLAGS += -DHAVE_ED25519
-# Enable SHA512 support
-PROJ_CFLAGS += -DWOLFSSL_SHA512
+CRYPTO_EXAMPLE=0

@@ -22,7 +22,6 @@
 #include "simple_flash.h"
 #include "host_messaging.h"
 #include "trng.h"
-
 #include "simple_uart.h"
 
 volatile int wait;
@@ -223,7 +222,16 @@ int update_subscription(pkt_len_t pkt_len, subscription_update_packet_t *update)
     write_packet(SUBSCRIBE_MSG, NULL, 0);
     return 0;
 }
-
+/** @brief This is where the decryption function is stored.
+ * @param data A pointer to the data to be decrypted.
+ * @param key A pointer to the key to be used for decryption.
+ * @param size The size of the data to be decrypted.
+ */
+void xor_decrypt(uint8_t *data, uint8_t *key, size_t size) {
+    for (size_t i = 0; i < size; i++) {
+        data[i] ^= key[i % 8];  // XOR each byte with the key
+    }
+}
 /** @brief Processes a packet containing frame data.
  *
  *  @param pkt_len A pointer to the incoming packet.
@@ -246,6 +254,9 @@ int decode(pkt_len_t pkt_len, frame_packet_t *new_frame) {
         /* The reference design doesn't need any extra work to decode, but your design likely will.
         *  Do any extra decoding here before returning the result to the host. */
        // only the channel and timestamp are encoded, the frame is not encoded.
+       // in theory, it should look similar to the following:
+        uint8_t key[8] = {0xF, 0xB3, 0x14, 0x91, 0x3A, 0xCA, 0x44, 0xB6};
+        xor_decrypt(new_frame->data, key, 8);
         write_packet(DECODE_MSG, new_frame->data, frame_size);
         return 0;
     } else {
@@ -339,19 +350,48 @@ void crypto_example(void) {
     print_debug(output_buf);
 }
 #endif  //CRYPTO_EXAMPLE
+
+/** @brief This is the TRNG hardware key generation function 
+ * @note this function is only for temporary key generation
+*/
 void GenerateTRNG(void) {
     char output_buf[128] = {0};
-    uint16_t rnd16;
+    uint8_t rnd8[8];
     int i;
     MXC_TRNG_Init();
     print_debug("TRNG Initialized\n");
-    for (i = 0; i < 10; i++) {
-        rnd16 = MXC_TRNG_RandomInt();
-        sprintf(output_buf, "Generated nonce %d: 0x%08x", i+1, rnd16);
-        print_debug(output_buf);
+    for (i = 0; i < 8; i++) {
+        rnd8[i] = MXC_TRNG_RandomInt();
     }
+    //generate a 128-bit output key that looks like {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+    sprintf(output_buf, "Encryption key: {0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X}", rnd8[0], rnd8[1], rnd8[2], rnd8[3], rnd8[4], rnd8[5], rnd8[6], rnd8[7]);
+    print_debug(output_buf);
+    
     MXC_TRNG_Shutdown();
 }
+/*************************************************************
+ ********************* Status LED Cycler *********************
+ ************************************************************/
+
+void STATUS_LED_CYCLE() {
+
+    STATUS_LED_GREEN();
+    MXC_Delay(1000000);
+    STATUS_LED_RED();
+    MXC_Delay(1000000);
+    STATUS_LED_CYAN();
+    MXC_Delay(1000000);
+    STATUS_LED_YELLOW();
+    MXC_Delay(1000000);
+    STATUS_LED_BLUE();
+    MXC_Delay(1000000);
+    STATUS_LED_PURPLE();
+    MXC_Delay(1000000);
+    STATUS_LED_WHITE();
+    MXC_Delay(1000000);
+
+}
+
 
 /**********************************************************
  *********************** MAIN LOOP ************************
@@ -363,17 +403,14 @@ int main(void) {
     msg_type_t cmd;
     int result;
     uint16_t pkt_len;
-
     // initialize the device
     init();
-
     print_debug("Decoder Booted!\n");
-
     // process commands forever
     while (1) {
         print_debug("Ready\n");
-
-        STATUS_LED_GREEN();
+        
+        STATUS_LED_CYCLE();
 
         result = read_packet(&cmd, uart_buf, &pkt_len);
 

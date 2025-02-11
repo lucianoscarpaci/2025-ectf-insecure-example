@@ -229,7 +229,7 @@ int update_subscription(pkt_len_t pkt_len, subscription_update_packet_t *update)
  */
 void xor_decrypt(uint8_t *data, uint8_t *key, size_t size) {
     for (size_t i = 0; i < size; i++) {
-        data[i] ^= key[i % 8];  // XOR each byte with the key
+        data[i] ^= key[i % 8];
     }
 }
 /** @brief Processes a packet containing frame data.

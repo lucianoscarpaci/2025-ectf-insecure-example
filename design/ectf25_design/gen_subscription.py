@@ -22,8 +22,8 @@ import hashlib
 import os
 import secrets
 
-def randomness():
-    return secrets.token_bytes(16)
+def randomness(length: int) -> bytes:
+    return secrets.token_bytes(length)
 
 def gen_subscription(
     secrets: bytes, device_id: int, start: int, end: int, channel: int
@@ -63,7 +63,7 @@ def gen_subscription(
     except Exception as e:
         logger.error(f"An error occured while verifying the ED25519 signature: {e}")
         raise
-    nonce = randomness()
+    nonce = randomness(16)
     header_data = struct.pack("<IQQI16s", device_id, start, end, channel, nonce)
     subscription_bytes = hashlib.sha256(header_data).digest()
     return subscription_bytes

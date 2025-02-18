@@ -255,8 +255,13 @@ int decode(pkt_len_t pkt_len, frame_packet_t *new_frame) {
         *  Do any extra decoding here before returning the result to the host. */
        // only the channel and timestamp are encoded, the frame is not encoded.
        // in theory, it should look similar to the following:
-        uint8_t key[8] = {0xF, 0xB3, 0x14, 0x91, 0x3A, 0xCA, 0x44, 0xB6};
+        uint8_t key[8];
+        //memcpy(key, new_frame->data + frame_size, 8);
+        memcpy(key, new_frame->data, 8);
+        //experimental
+        //xor_decrypt(encrypted_frame, key, 8);
         xor_decrypt(new_frame->data, key, 8);
+        // Write the decrypted packet
         write_packet(DECODE_MSG, new_frame->data, frame_size);
         return 0;
     } else {

@@ -19,6 +19,7 @@ from nacl.exceptions import BadSignatureError
 from loguru import logger
 import hashlib
 import os
+import secrets
 
 class Encoder:
     def __init__(self, secrets: bytes):
@@ -66,6 +67,9 @@ class Encoder:
         except Exception as e:
             logger.error(f"An error occurred during verification: {e}")
             raise
+    
+    def randomness(self, length: int) -> bytes:
+        return secrets.token_bytes(length)
 
     def xor_encrypt(self, data: bytes, key: bytes, size: int) -> bytes:
         result = bytearray(data)
@@ -74,7 +78,7 @@ class Encoder:
         return bytes(result)
     
     def encrypt_frame(self, frame: bytes, key: bytes) -> bytes:
-        return self.xor_encrypt(frame, key, 8)
+        return self.xor_encrypt(frame, key, len(frame))
 
     def encode(self, channel: int, frame: bytes, timestamp: int) -> bytes:
         """The frame encoder function
@@ -94,18 +98,11 @@ class Encoder:
 
         :returns: The encoded frame, which will be sent to the Decoder
         """
-        dir = os.path.dirname(os.path.realpath(__file__))
-        file_path = os.path.join(dir, 'key.bin')
-
-        if not os.path.exists(file_path):
-            logger.error(f"Key file not found: {file_path}")
-            raise FileNotFoundError(f"Key file not found: {file_path}")
-
-        with open(file_path, 'rb') as f:
-            key = f.read()
+        
+        key = self.randomness(8)
         original_bytes = struct.pack("<IQ", channel, timestamp)
         encrypted_frame = self.encrypt_frame(frame, key)
-        encoded_frame = original_bytes + encrypted_frame
+        encoded_frame = key + original_bytes + encrypted_frame
         return encoded_frame
 
 

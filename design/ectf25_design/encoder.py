@@ -67,18 +67,6 @@ class Encoder:
         except Exception as e:
             logger.error(f"An error occurred during verification: {e}")
             raise
-    
-    def randomness(self, length: int) -> bytes:
-        return secrets.token_bytes(length)
-
-    def xor_encrypt(self, data: bytes, key: bytes, size: int) -> bytes:
-        result = bytearray(data)
-        for i in range(size):
-            result[i] ^= key[i % len(key)]
-        return bytes(result)
-    
-    def encrypt_frame(self, frame: bytes, key: bytes) -> bytes:
-        return self.xor_encrypt(frame, key, len(frame))
 
     def encode(self, channel: int, frame: bytes, timestamp: int) -> bytes:
         """The frame encoder function
@@ -99,10 +87,9 @@ class Encoder:
         :returns: The encoded frame, which will be sent to the Decoder
         """
         
-        key = self.randomness(8)
+        
         original_bytes = struct.pack("<IQ", channel, timestamp)
-        encrypted_frame = self.encrypt_frame(frame, key)
-        encoded_frame = original_bytes + encrypted_frame + key
+        encoded_frame = original_bytes + frame
         return encoded_frame
 
 

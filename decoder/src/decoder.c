@@ -222,16 +222,6 @@ int update_subscription(pkt_len_t pkt_len, subscription_update_packet_t *update)
     write_packet(SUBSCRIBE_MSG, NULL, 0);
     return 0;
 }
-/** @brief This is where the decryption function is stored.
- * @param data A pointer to the data to be decrypted.
- * @param key A pointer to the key to be used for decryption.
- * @param size The size of the data to be decrypted.
- */
-void xor_decrypt(uint8_t *data, uint8_t *key, size_t size) {
-    for (size_t i = 0; i < size; i++) {
-        data[i] ^= key[i % 8];
-    }
-}
 /** @brief Processes a packet containing frame data.
  *
  *  @param pkt_len A pointer to the incoming packet.
@@ -250,19 +240,13 @@ int decode(pkt_len_t pkt_len, frame_packet_t *new_frame) {
     memcpy(frames, new_frame->data, FRAME_SIZE);
 
     // Frame size is the size of the packet minus the size of non-frame elements
-    frame_size = pkt_len - (sizeof(channel) + sizeof(timestamp) + 8);
+    frame_size = pkt_len - (sizeof(channel) + sizeof(timestamp));
     // Check that we are subscribed to the channel...
     print_debug("Checking subscription\n");
     if (is_subscribed(channel)) {
         print_debug("Subscription Valid\n");
         /* The reference design doesn't need any extra work to decode, but your design likely will.
         *  Do any extra decoding here before returning the result to the host. */
-       // only the channel and timestamp are encoded, the frame is not encoded.
-       // in theory, it should look similar to the following:
-        uint8_t key[8];
-        //Copy the last 8 bytes of the frame into the key
-        memcpy(key, frames + FRAME_SIZE - 8, 8);
-        xor_decrypt(frames, key, frame_size);
         // Write the decrypted packet
         write_packet(DECODE_MSG, frames, frame_size);
         return 0;

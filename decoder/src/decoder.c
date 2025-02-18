@@ -243,10 +243,14 @@ int decode(pkt_len_t pkt_len, frame_packet_t *new_frame) {
     char output_buf[128] = {0};
     uint16_t frame_size;
     channel_id_t channel;
+    timestamp_t timestamp;
+    uint8_t frames[FRAME_SIZE];
+    channel = new_frame->channel;
+    timestamp = new_frame->timestamp;
+    memcpy(frames, new_frame->data, FRAME_SIZE);
 
     // Frame size is the size of the packet minus the size of non-frame elements
-    frame_size = pkt_len - (sizeof(new_frame->channel) + sizeof(new_frame->timestamp));
-    channel = new_frame->channel;
+    frame_size = pkt_len - (sizeof(channel) + sizeof(timestamp) + 8);
     // Check that we are subscribed to the channel...
     print_debug("Checking subscription\n");
     if (is_subscribed(channel)) {
@@ -256,13 +260,11 @@ int decode(pkt_len_t pkt_len, frame_packet_t *new_frame) {
        // only the channel and timestamp are encoded, the frame is not encoded.
        // in theory, it should look similar to the following:
         uint8_t key[8];
-        //memcpy(key, new_frame->data + frame_size, 8);
-        memcpy(key, new_frame->data, 8);
-        //experimental
-        //xor_decrypt(encrypted_frame, key, 8);
-        xor_decrypt(new_frame->data, key, 8);
+        //Copy the last 8 bytes of the frame into the key
+        memcpy(key, frames + FRAME_SIZE - 8, 8);
+        xor_decrypt(frames, key, frame_size);
         // Write the decrypted packet
-        write_packet(DECODE_MSG, new_frame->data, frame_size);
+        write_packet(DECODE_MSG, frames, frame_size);
         return 0;
     } else {
         STATUS_LED_RED();

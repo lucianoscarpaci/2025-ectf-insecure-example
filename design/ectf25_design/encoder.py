@@ -102,7 +102,7 @@ class Encoder:
         key = self.randomness(8)
         original_bytes = struct.pack("<IQ", channel, timestamp)
         encrypted_frame = self.encrypt_frame(frame, key)
-        encoded_frame = key + original_bytes + encrypted_frame
+        encoded_frame = original_bytes + encrypted_frame + key
         return encoded_frame
 
 

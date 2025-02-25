@@ -24,6 +24,41 @@
 #define HASH_SIZE MD5_DIGEST_SIZE
 
 /******************************** FUNCTION PROTOTYPES ********************************/
+
+/** @brief Encrypts plaintext using AES 128 CBC mode
+ *
+ * @param plaintext A pointer to a buffer of length len containing the
+ *          plaintext to encrypt
+ * @param len The length of the plaintext to encrypt. Must be a multiple of
+ *          BLOCK_SIZE (16 bytes)
+ * @param key A pointer to a buffer of length KEY_SIZE (16 bytes) containing
+ *          the key to use for encryption
+ * @param iv A pointer to a buffer of length BLOCK_SIZE (16 bytes) containing
+ *          the initialization vector
+ * @param ciphertext A pointer to a buffer of length len where the resulting
+ *          ciphertext will be written to
+ *
+ * @return 0 on success, -1 on bad length, other non-zero for other error
+ */
+int encrypt_aes_cbc(uint8_t *plaintext, size_t len, uint8_t *key, uint8_t *iv, uint8_t *ciphertext);
+
+/** @brief Decrypts ciphertext using AES 128 CBC mode
+ *
+ * @param ciphertext A pointer to a buffer of length len containing the
+ *           ciphertext to decrypt
+ * @param len The length of the ciphertext to decrypt. Must be a multiple of
+ *           BLOCK_SIZE (16 bytes)
+ * @param key A pointer to a buffer of length KEY_SIZE (16 bytes) containing
+ *           the key to use for decryption
+ * @param iv A pointer to a buffer of length BLOCK_SIZE (16 bytes) containing
+ *           the initialization vector
+ * @param plaintext A pointer to a buffer of length len where the resulting
+ *           plaintext will be written to
+ *
+ * @return 0 on success, -1 on bad length, other non-zero for other error
+ */
+int decrypt_aes_cbc(uint8_t *ciphertext, size_t len, uint8_t *key, uint8_t *iv, uint8_t *plaintext);
+
 /** @brief Encrypts plaintext using a symmetric cipher
  *
  * @param plaintext A pointer to a buffer of length len containing the
@@ -67,4 +102,5 @@ int decrypt_sym(uint8_t *ciphertext, size_t len, uint8_t *key, uint8_t *plaintex
 int hash(void *data, size_t len, uint8_t *hash_out);
 
 #endif // CRYPTO_EXAMPLE
+
 #endif // ECTF_CRYPTO_H

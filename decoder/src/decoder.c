@@ -21,11 +21,11 @@
 #include "mxc_delay.h"
 #include "simple_flash.h"
 #include "host_messaging.h"
-#include "trng.h"
 #include "simple_uart.h"
-
-volatile int wait;
-volatile int callback_result;
+#include "secrets.h"
+#include "wolfssl/wolfcrypt/aes.h"
+#include "wolfssl/options.h"
+#include "wolfssl/wolfcrypt/coding.h"
 
 /* Code between this #ifdef and the subsequent #endif will
 *  be ignored by the compiler if CRYPTO_EXAMPLE is not set in
@@ -58,7 +58,6 @@ volatile int callback_result;
 #define DEFAULT_CHANNEL_TIMESTAMP 0xFFFFFFFFFFFFFFFF
 // This is a canary value so we can confirm whether this decoder has booted before
 #define FLASH_FIRST_BOOT 0xDEADBEEF
-
 /**********************************************************
  ********************* STATE MACROS ***********************
  **********************************************************/
@@ -238,6 +237,12 @@ int decode(pkt_len_t pkt_len, frame_packet_t *new_frame) {
     channel = new_frame->channel;
     timestamp = new_frame->timestamp;
     memcpy(frames, new_frame->data, FRAME_SIZE);
+    uint8_t decoded_sk[KEY_SIZE];
+    uint8_t decoded_iv[BLOCK_SIZE];
+    size_t sk_len, iv_len;
+
+    Base64_Decode(decoded_sk, KEY_SIZE, SECRET_SK, &sk_len);
+    Base64_Decode(decoded_iv, BLOCK_SIZE, SECRET_IV, &iv_len);
 
     // Frame size is the size of the packet minus the size of non-frame elements
     frame_size = pkt_len - (sizeof(channel) + sizeof(timestamp));
@@ -248,6 +253,7 @@ int decode(pkt_len_t pkt_len, frame_packet_t *new_frame) {
         /* The reference design doesn't need any extra work to decode, but your design likely will.
         *  Do any extra decoding here before returning the result to the host. */
         // Write the decrypted packet
+        decrypt_aes_cbc(frames, frame_size, (uint8_t*)decoded_sk, (uint8_t*)decoded_iv, frames);
         write_packet(DECODE_MSG, frames, frame_size);
         return 0;
     } else {
@@ -324,7 +330,7 @@ void crypto_example(void) {
     bzero(key, BLOCK_SIZE);
 
     // Encrypt example data and print out
-    encrypt_sym((uint8_t*)data, BLOCK_SIZE, key, ciphertext);
+    encrypt_aes_cbc((uint8_t*)data, BLOCK_SIZE, (uint8_t*)SECRET_SK, (uint8_t*)SECRET_IV, ciphertext);
     print_debug("Encrypted data: \n");
     print_hex_debug(ciphertext, BLOCK_SIZE);
 
@@ -336,30 +342,12 @@ void crypto_example(void) {
     print_hex_debug(hash_out, HASH_SIZE);
 
     // Decrypt the encrypted message and print out
-    decrypt_sym(ciphertext, BLOCK_SIZE, key, decrypted);
+    decrypt_aes_cbc(ciphertext, BLOCK_SIZE, (uint8_t*)SECRET_SK, (uint8_t*)SECRET_IV, decrypted);
     sprintf(output_buf, "Decrypted message: %s\n", decrypted);
     print_debug(output_buf);
 }
 #endif  //CRYPTO_EXAMPLE
 
-/** @brief This is the TRNG hardware key generation function 
- * @note this function is only for temporary key generation
-*/
-void GenerateTRNG(void) {
-    char output_buf[128] = {0};
-    uint8_t rnd8[8];
-    int i;
-    MXC_TRNG_Init();
-    print_debug("TRNG Initialized\n");
-    for (i = 0; i < 8; i++) {
-        rnd8[i] = MXC_TRNG_RandomInt();
-    }
-    //generate a 128-bit output key that looks like {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
-    sprintf(output_buf, "Encryption key: {0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X}", rnd8[0], rnd8[1], rnd8[2], rnd8[3], rnd8[4], rnd8[5], rnd8[6], rnd8[7]);
-    print_debug(output_buf);
-    
-    MXC_TRNG_Shutdown();
-}
 /*************************************************************
  ********************* Status LED Cycler *********************
  ************************************************************/
@@ -424,8 +412,7 @@ int main(void) {
                 crypto_example();
             #endif // CRYPTO_EXAMPLE
 
-            // Generate nonces using the TRNG
-            GenerateTRNG();
+            
             list_channels();
             break;
 

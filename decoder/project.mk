@@ -20,7 +20,7 @@ MFLOAT_ABI=soft
 
 IPATH+=../deployment
 IPATH+=inc/
-IPATH+=/secrets
+IPATH+=../secrets
 VPATH+=src/
 
 # ****************** eCTF Bootloader *******************
@@ -36,4 +36,4 @@ ENTRY=firmware_startup
 # WolfSSL can be downloaded from: https://www.wolfssl.com/download/
 
 # Disable Crypto Example
-CRYPTO_EXAMPLE=0
+CRYPTO_EXAMPLE=1

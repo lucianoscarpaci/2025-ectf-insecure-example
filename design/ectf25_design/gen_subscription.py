@@ -18,12 +18,6 @@ import base64
 from loguru import logger
 from nacl.signing import VerifyKey
 from nacl.exceptions import BadSignatureError
-import hashlib
-import os
-import secrets
-
-def randomness(length: int) -> bytes:
-    return secrets.token_bytes(length)
 
 def gen_subscription(
     secrets: bytes, device_id: int, start: int, end: int, channel: int
@@ -41,13 +35,13 @@ def gen_subscription(
     # TODO: Update this function to provide a Decoder with whatever data it needs to
     #   subscribe to a new channel. This function will be called by the Encoder
     secrets = json.loads(secrets)
-    nonce = secrets["nonce"]
+    sk = secrets["sk"]
     public_key = secrets["public_key"]
     signature = secrets["signature"]
     # ED25519 signature verification
     try:
         # Decode the nonce, public key and signature from Base64
-        nonce = base64.b64decode(nonce)
+        sk = base64.b64decode(sk)
         public_key = base64.b64decode(public_key)
         signature = base64.b64decode(signature)
 
@@ -55,7 +49,7 @@ def gen_subscription(
         verify_key = VerifyKey(public_key)
 
         # Verify the signed message
-        verify_key.verify(nonce, signature)
+        verify_key.verify(sk, signature)
         logger.success(f"PASSED: The ED25519 signature is valid.")
     except BadSignatureError:
         logger.error(f"FAILED: The ED25519 signature is invalid.")
@@ -63,10 +57,9 @@ def gen_subscription(
     except Exception as e:
         logger.error(f"An error occured while verifying the ED25519 signature: {e}")
         raise
-    nonce = randomness(16)
-    header_data = struct.pack("<IQQI16s", device_id, start, end, channel, nonce)
-    subscription_bytes = hashlib.sha256(header_data).digest()
-    return subscription_bytes
+
+    subscriptions = struct.pack("<IQQI", device_id, start, end, channel)
+    return subscriptions
 
 
 def parse_args():

@@ -14,12 +14,13 @@ import argparse
 import struct
 import json
 import base64
+from loguru import logger
 from nacl.signing import VerifyKey
 from nacl.exceptions import BadSignatureError
-from loguru import logger
 import hashlib
 import os
-import secrets
+import secrets as pysecrets
+from wolfcrypt.ciphers import Aes, MODE_CBC
 
 class Encoder:
     def __init__(self, secrets: bytes):
@@ -37,12 +38,14 @@ class Encoder:
 
         # Load the example secrets for use in Encoder.encode
         # This will be "EXAMPLE" in the reference design"
-        self.nonce = secrets["nonce"]
+        base64_sk = secrets["sk"]
+        base64_iv = secrets["iv"]
+        self.sk = base64.b64decode(base64_sk)
+        self.iv = base64.b64decode(base64_iv)
         self.public_key = secrets["public_key"]
         self.signature = secrets["signature"]
-
         self.validate_secrets()
-
+    
     def validate_secrets(self):
         """Validate the secrets file
 
@@ -51,7 +54,7 @@ class Encoder:
         """
         try:
         # Decode the nonce, public key and signature from Base64
-            nonce = base64.b64decode(self.nonce)
+            sk = self.sk
             public_key = base64.b64decode(self.public_key)
             signature = base64.b64decode(self.signature)
 
@@ -59,7 +62,7 @@ class Encoder:
             verify_key = VerifyKey(public_key)
 
             # Verify the signed message
-            verify_key.verify(nonce, signature)
+            verify_key.verify(sk, signature)
             logger.success(f"PASSED: The ED25519 signature is valid.")
         except BadSignatureError:
             logger.error(f"FAILED: The ED25519 signature is invalid.")
@@ -86,10 +89,10 @@ class Encoder:
 
         :returns: The encoded frame, which will be sent to the Decoder
         """
-        
-        
+        cipher = Aes(self.sk, MODE_CBC, self.iv)
+        encrypted_frame = cipher.encrypt(frame + b"\x00" * (16 - len(frame) % 16))
         original_bytes = struct.pack("<IQ", channel, timestamp)
-        encoded_frame = original_bytes + frame
+        encoded_frame = original_bytes + encrypted_frame
         return encoded_frame
 
 

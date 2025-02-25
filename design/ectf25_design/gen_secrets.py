@@ -12,7 +12,7 @@ Copyright: Copyright (c) 2025 The MITRE Corporation
 
 import argparse
 import json
-import secrets
+import secrets as pysecrets
 import hashlib
 import base64
 from nacl.signing import SigningKey
@@ -34,24 +34,27 @@ def gen_secrets(channels: list[int]) -> bytes:
     """
     try:
         # Generate random bytes
-        nonce = secrets.token_bytes(16)
+        sk = pysecrets.token_bytes(16)
+        iv = pysecrets.token_bytes(16)
         # Generate a new ED25519 signing key
         signing_key = SigningKey.generate()
         # Signs the nonce using the signing key
-        signed_message = signing_key.sign(nonce)
+        signed_message = signing_key.sign(sk)
         # Extract signature (ED25519) from signed message
         signature = signed_message.signature
-        # result including channels, nonce, public key, and signature
+        # result including channels, sk, iv, public key, and signature
+        
         result = {
             "channels": channels,
-            "nonce": base64.b64encode(nonce).decode('utf-8'),
+            "sk": base64.b64encode(sk).decode('utf-8'),
+            "iv": base64.b64encode(iv).decode('utf-8'),
             "public_key": base64.b64encode(signing_key.verify_key.encode()).decode('utf-8'),
-            "signature": base64.b64encode(signature).decode('utf-8'),
+            "signature": base64.b64encode(signature).decode('utf-8')
         }
     except Exception as e:
         logger.error(f"An error occured while generating secrets: {e}")
         raise
-    return json.dumps(result).encode()
+    return json.dumps(result).encode(), sk, iv, signing_key, signature
 
 
 
@@ -90,7 +93,7 @@ def main():
     # Parse the command line arguments
     args = parse_args()
 
-    secrets = gen_secrets(args.channels)
+    secrets, sk, iv, signing_key, signature = gen_secrets(args.channels)
 
     # Print the generated secrets for your own debugging
     # Attackers will NOT have access to the output of this, but feel free to remove
@@ -102,6 +105,16 @@ def main():
     with open(args.secrets_file, "wb" if args.force else "xb") as f:
         # Dump the secrets to the file
         f.write(secrets)
+    
+    secrets_header = args.secrets_file.with_name('secrets.h')
+    with open(secrets_header, "w") as f:
+        f.write(f"#ifndef SECRETS_H\n#define SECRETS_H\n\n")
+        f.write(f"#define SECRET_SK \"{base64.b64encode(sk).decode('utf-8')}\"\n")
+        f.write(f"#define SECRET_IV \"{base64.b64encode(iv).decode('utf-8')}\"\n")
+        f.write(f"#define SECRET_CHANNEL {args.channels}\n\n")
+        f.write(f"#define SECRET_PUBLIC_KEY \"{base64.b64encode(signing_key.verify_key.encode()).decode('utf-8')}\"\n")
+        f.write(f"#define SECRET_SIGNATURE \"{base64.b64encode(signature).decode('utf-8')}\"\n\n")
+        f.write(f"#endif\n")
 
     # For your own debugging. Feel free to remove
     logger.success(f"Wrote secrets to {str(args.secrets_file.absolute())}")

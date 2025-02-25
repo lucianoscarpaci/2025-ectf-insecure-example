@@ -14,6 +14,35 @@
 #if CRYPTO_EXAMPLE
 
 #include "simple_crypto.h"
+#include "secrets.h"
+
+int encrypt_aes_cbc(uint8_t *plaintext, size_t len, uint8_t *key, uint8_t *iv, uint8_t *ciphertext) {
+    Aes aes;
+    int ret;
+
+    if (len % BLOCK_SIZE != 0) {
+        return -1; // Length must be a multiple of BLOCK_SIZE
+    }
+
+    wc_AesSetKey(&aes, key, KEY_SIZE, iv, AES_ENCRYPTION);
+    ret = wc_AesCbcEncrypt(&aes, ciphertext, plaintext, len);
+
+    return ret == 0 ? 0 : -1;
+}
+
+int decrypt_aes_cbc(uint8_t *ciphertext, size_t len, uint8_t *key, uint8_t *iv, uint8_t *plaintext) {
+    Aes aes;
+    int ret;
+
+    if (len % BLOCK_SIZE != 0) {
+        return -1; // Length must be a multiple of BLOCK_SIZE
+    }
+
+    wc_AesSetKey(&aes, key, KEY_SIZE, iv, AES_DECRYPTION);
+    ret = wc_AesCbcDecrypt(&aes, plaintext, ciphertext, len);
+
+    return ret == 0 ? 0 : -1;
+}
 #include <stdint.h>
 #include <string.h>
 

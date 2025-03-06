@@ -238,22 +238,21 @@ build_decoder () {
 }
 generate_subscription () {
 	default_params "0xdeadbeef 32 128 1"
-	rm subscription.bin
-	python -m ectf25_design.gen_subscription secrets/secrets.json subscription.bin $params
+	for i in {1..3}; do
+		subscription_file="decoder/subscription_${i}.bin"
+		rm -f $subscription_file
+		python -m ectf25_design.gen_subscription secrets/secrets.json $subscription_file 0xdeadbeef 32 128 $i
+	done
 }
 firmware () {
-	default_params "max78000"
 	if [[ -z $(command -v openocd) ]]; then
-		# technically we could mount and do this here
-		# but that may require root/group stuff
-		# and i don't want this script to do that
-		echo "Error: openocd not found. Flash manually."
+		echo "Error: openocd not found. Please install it first."
 		exit 1
 	elif [[ -z $(ls | grep insecure.bin) ]]; then
-		echo "Error: insecure.bin not found."
+		echo "Error: insecure.bin not found in the current directory."
 		exit 1
 	else
-		openocd -s scripts/ -f interface/cmsis-dap.cfg -f target/max78000.cfg -c "init; reset halt; max32xxx mass_erase 0;  program insecure.bin verify 0x10000000 reset exit;"
+		openocd -s scripts/ -f interface/cmsis-dap.cfg -f target/max78000.cfg -c "init; reset halt; max32xxx mass_erase 0; program insecure.bin verify 0x10000000; verify reset exit"
 	fi
 }
 flash () {
@@ -277,7 +276,11 @@ list() {
 }
 subscribe () {
 	default_params "subscription.bin"
-	python -m ectf25.tv.subscribe $params $serialport
+	for i in {1..3}; do
+		subscription_file="$PWD/decoder/subscription_${i}.bin"
+		python -m ectf25.tv.subscribe $subscription_file $serialport
+		sleep 2
+	done
 }
 howusage () {
 	echo "Usage: $0 {command} [switch \"parameters\"] ..."
@@ -293,7 +296,7 @@ uplink () {
 	#if [[ $uppid ]]; then 
 	#	kill $uppid
 	#fi
-	python -m ectf25.uplink secrets/secrets.json localhost 2000 1:10:frames/$params	
+	python -m ectf25.uplink secrets/secrets.json localhost 2000 1:30:frames/$params	
 }
 satellite () {
 	default_params "1:2001"

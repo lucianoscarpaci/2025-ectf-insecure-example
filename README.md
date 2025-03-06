@@ -99,6 +99,19 @@ python -m pip install ./tools/
 python -m pip install -e ./design/
 ```
 
+#### Flashing Bootloader with openocd command
+Start nix-shell in the project directory:
+```bash
+nix-shell
+```
+Flash the (insecure.bin) bootloader with openocd:
+```bash
+./hosttools firmware
+```
+Exit the nix-shell:
+```bash
+exit
+```
 
 ### Building the deployment
 
@@ -122,7 +135,7 @@ The Decoder can be built next. The generated secrets will be available in the do
 These commands will generate a Decoder build with a Device ID 0xdeadbeef. Build outputs are copied to the `build_out`
 directory.
 
-### Mac:
+### Mac/Linux
 
 ```bash
 ./hosttools build_decoder
@@ -166,14 +179,11 @@ Change the directory to the decoder directory FIRST.
 This command will create a subscription file called subscription.bin targeting a device with ID 0xDEADBEEF, a start
 timestamp of 32, and an end timestamp of 128 for channel 1.
 
-#### Mac
+#### Mac/Linux
 
 ```bash
-python -m ectf25_design.gen_subscription ../secrets/secrets.json subscription_1.bin 0xdeadbeef 32 128 1
-python -m ectf25_design.gen_subscription ../secrets/secrets.json subscription_2.bin 0xdeadbeef 32 128 2
-python -m ectf25_design.gen_subscription ../secrets/secrets.json subscription_3.bin 0xdeadbeef 32 128 3
+./hosttools gen_subscription
 ```
-
 ## Flashing [Decoder] Firmware
 
 Flashing the MAX78000 is done through the eCTF Bootloader. You will need to initially flash
@@ -201,12 +211,6 @@ this is two parts specifying the path to the firmware, and the second is to the 
 ./hosttools flash -b ./decoder/build_out/max78000.bin
 ```
 
-#### PowerShell
-
-```
-python -m ectf25.utils.flash .\decoder\build_out\max78000.bin COM12
-```
-
 ## Host Tools
 
 ### List Tool
@@ -228,7 +232,7 @@ options:
 
 ### **Example Utilization**
 
-#### Linux
+#### Mac/Linux
 
 ```bash
 ./hosttools ls
@@ -255,14 +259,12 @@ options:
 
 ### **Example Utilization**
 
-#### Mac 
+#### Mac/Linux
 
 After creating subscription channels, In the decoder directory run this command.
 
 ```bash
-python -m ectf25.tv.subscribe subscription_1.bin /dev/tty.usbmodem14202
-python -m ectf25.tv.subscribe subscription_2.bin /dev/tty.usbmodem14202
-python -m ectf25.tv.subscribe subscription_3.bin /dev/tty.usbmodem14202
+./hosttools subscribe
 ```
 
 ### Tester Tool
@@ -301,7 +303,7 @@ options:
 
 ### **Example Utilization**
 
-#### Mac
+#### Mac/Linux
 
 This is very important! This will check the security whether it is correct or not.
 The below checks for channel 1. It should return subscription because we subscribed to it
@@ -310,13 +312,7 @@ channel 2. Changing the channel to 3 and 4 should work because we made a subscri
 channels 3 and 4.
 
 ```bash
-python -m ectf25.utils.tester --port /dev/tty.usbmodem14202 -s secrets/secrets.json rand -c 1 -f 64
-```
-
-#### PowerShell
-
-```
-python -m ectf25.utils.tester --port COM12 -s secrets\secrets.json rand -c 1 -f 64
+./hosttools test
 ```
 
 ## Running the Satellite and Encoder
@@ -347,10 +343,10 @@ options:
 
 ### **Example Utilization**
 
-#### Linux
+#### Mac/Linux
 
 ```bash
-python -m ectf25.uplink secrets/secrets.json localhost 2000 1:30:frames/x_c0.json
+./hosttools uplink
 ```
 ### Satellite
 
@@ -373,10 +369,10 @@ options:
 
 ### **Example Utilization**
 
-#### Linux
+#### Mac/Linux
 
 ```bash
-python -m ectf25.satellite localhost 2000 localhost 1:3000
+./hosttools satellite
 ```
 
 ### TV
@@ -400,18 +396,8 @@ options:
 
 ### **Example Utilization**
 
-#### Linux
+#### Mac/Linux
 
 ```bash
- python -m ectf25.tv.run localhost 3000 /dev/tty.usbmodem14202
-```
-
-#### Flashing Bootloader with openocd command
-Start nix-shell in the project directory:
-```bash
-nix-shell
-```
-Flash the (insecure.bin) bootloader with openocd:
-```bash
-openocd -s scripts/ -f interface/cmsis-dap.cfg -f target/max78000.cfg -c "init; reset halt; max32xxx mass_erase 0; program insecure.bin verify 0x10000000; verify reset exit "
+ ./hosttools tv
 ```

@@ -1,0 +1,453 @@
+#!/bin/bash
+
+# Edit this with your serial port for the MAX78000FTHR
+serialport="/dev/tty.usbmodem14202" # only use * if one ttyACM is connected at once
+# Edit this with your buld out path
+bindir="./decoder/build_out/"
+
+params=""
+background=""
+killp=0
+secure=""
+
+init() {
+	if [[ -z "$VIRTUAL_ENV" ]]; then
+		if [[ -z "$(ls -a | grep venv)" ]]; then
+			echo "Virtual Environment (venv) not found. Creating..."
+			python -m venv .venv
+		fi
+		source ./.venv/bin/activate
+	fi
+	istools="$(python -m pip list | grep ectf25)"
+	if [[ -z "$istools" ]]; then
+		echo "Installing ectf25 tools..."
+		python -m pip install ./tools/
+	fi
+	isdesign="$(echo \"$istools\" | grep design)"
+	if [[ -z "$isdesign" ]]; then
+		echo "Installing ectf25 design elements..."
+		python -m pip install -e ./design/
+	fi
+}
+
+handle_switches () {
+	params=""
+	shift_count=0
+	while [[ -n "$@" ]]; do
+		case "$1" in
+			-p | --parameters)
+				shift
+				((shift_count++))
+				#while [[ "$1:0:1" != "-" ]]; do
+				params="$1"
+				shift
+				((shift_count++))
+				#done
+				;;
+			-h | --help)
+				howusage
+				helpprint
+				exit 0
+				;;
+			-d | --bindir)
+				shift
+				((shift_count++))
+				bindir="$1"
+				shift
+				((shift_count++))
+				;;				
+			-s | --serialport)
+				shift
+				((shift_count++))
+				serialport="$1"
+				shift
+				((shift_count++))
+				;;
+			-x | --secure )
+				shift
+				((shift_count++))
+				secure="--secure"
+				shift
+				((shift_count++))
+				;;
+			-b | --background)
+				shift
+				((shift_count++))
+				background="> /dev/null 2>&1 &"
+				shift
+				((shift_count++))
+				;;
+			-k | --kill)
+				shift
+				((shift_count++))
+				killp=1
+				shift
+				((shift_count++))
+				;;
+			-*)
+				printf "Error: Unrecognized switch $1\n"
+				exit 1
+				;;
+			*)
+				break
+				;;
+				
+		esac
+	done
+}
+
+handle_commands () {
+	shift_count=0
+	while [[ -n "$@" ]]; do
+		killp=0
+		background=""
+		case "$1" in
+			gen_secrets | gs)
+				echo "Generating Secrets..."
+				shift
+				handle_switches "$@"
+				shift $shift_count
+				generate_secrets "$@"
+				;;
+			build_decoder | bd)
+				echo "Building Decoder..."
+				shift
+				handle_switches "$@"
+				shift $shift_count
+				build_decoder "$@"
+				;;
+			gen_subscription | gb)
+				echo "Generating Subsciptions..."
+				shift
+				handle_switches "$@"
+				shift $shift_count
+				generate_subscription "$@"
+				;;
+			firmware | firm)
+				echo "Flashing firmware..."
+				shift
+				handle_switches "$@"
+				shift $shift_count
+				firmware "$@"
+				;;
+			flash)
+				echo "Flashing..."
+				shift
+				handle_switches "$@"
+				shift $shift_count
+				flash "$@"
+				;;
+			list | ls)
+				echo "Listing Subs..."
+				shift
+				handle_switches "$@"
+				shift $shift_count
+				list "$@"
+				;;
+			subscribe | sub)
+				echo "Subscribing..."
+				shift
+				handle_switches "$@"
+				shift $shift_count
+				subscribe "$@"
+				;;
+			tester | test)
+				echo "Testing..."
+				shift
+				handle_switches "$@"
+				shift $shift_count
+				tester "$@"
+				;;
+			uplink | up)
+				echo "Starting uplink..."
+				shift
+				handle_switches "$@"
+				shift $shift_count
+				uplink "$@"
+				;;
+			satellite | sat)
+				echo "Starting satellite..."
+				shift
+				handle_switches "$@"
+				shift $shift_count
+				satellite "$@"
+				;;
+			tv)
+				echo "Starting Television..."
+				shift
+				handle_switches "$@"
+				shift $shift_count
+				tv "$@"
+				;;
+			py | python)
+				echo "Executing Python Venv..."
+				shift
+				handle_switches "$@"
+				shift $shift_count
+				default_params "-m pip list"
+				python3 $params
+				;;
+			oo | openocd)
+				shift
+				handle_switches "$@"
+				shift $shift_count
+				oo
+				;;
+			gdb)
+				echo "Starting gdb debugging session..."
+				shift
+				handle_swithces "$@"
+				shift $shift_count
+				gdb
+				;;
+			help)
+				howusage
+				helpprint
+				exit 0
+				;;
+			-*)
+				handle_switches "$@"
+				shift $shift_count
+				;;
+			*)
+				if [[ -n "$1" ]]; then
+					printf "Error: Unrecognized command $1\n"
+				fi
+				howusage
+				exit 1
+				;;
+		esac
+	done
+}
+default_params () {
+	if [[ -z "$params" ]]; then
+		params="$@"
+		echo "No parameters provided, using default: $params"
+	fi
+}
+generate_secrets () {
+	rm -rf secrets
+	mkdir secrets
+	default_params "1 3 4"
+	python -m ectf25_design.gen_secrets secrets/secrets.json $params
+}
+build_decoder () {
+	docker build -t decoder ./decoder/
+	default_params "0xdeadbeef"
+	docker run --rm -v $bindir:/out -v ./decoder/:/decoder -v ./secrets:/secrets -e DECODER_ID=$params decoder
+}
+generate_subscription () {
+	default_params "0xdeadbeef 32 128 1"
+	rm subscription.bin
+	python -m ectf25_design.gen_subscription secrets/secrets.json subscription.bin $params
+}
+firmware () {
+	default_params "max78000"
+	if [[ -z $(command -v openocd) ]]; then
+		# technically we could mount and do this here
+		# but that may require root/group stuff
+		# and i don't want this script to do that
+		echo "Error: openocd not found. Flash manually."
+		exit 1
+	elif [[ -z $(ls | grep insecure.bin) ]]; then
+		echo "Error: insecure.bin not found."
+		exit 1
+	else
+		openocd -s scripts/ -f interface/cmsis-dap.cfg -f target/max78000.cfg -c "init; reset halt; max32xxx mass_erase 0;  program insecure.bin verify 0x10000000 reset exit;"
+	fi
+}
+flash () {
+	default_params "max78000"
+	if [[ -z $(command -v openocd) ]]; then
+		echo "openocd not found, flashing with python tools. [SLOW]"
+		python -m ectf25.utils.flash ${bindir%/}/$params.bin $serialport $secure
+	elif [[ -z $(ls | grep insecure.bin) ]]; then
+		echo "insecure.bin not found, flashing with python tools. [SLOW]"
+		python -m ectf25.utils.flash $bindir/$params.bin $serialport $secure
+	elif [[ -n $secure ]]; then
+		echo "Secure flag enabled, flashing with python tools."
+		python -m ectf25.utils.flash $bindir/$params.bin $serialport $secure
+	else
+		echo "Flashing with openocd. [FAST]"
+		openocd -s scripts/ -f interface/cmsis-dap.cfg -f target/max78000.cfg -c "init; reset halt; max32xxx mass_erase 0;  program insecure.bin verify 0x10000000; program ${bindir%/}/$params.bin verify 0x10002000; program ${bindir%/}/$params.elf verify reset exit "
+	fi
+}
+list() {
+	python -m ectf25.tv.list $serialport
+}
+subscribe () {
+	default_params "subscription.bin"
+	python -m ectf25.tv.subscribe $params $serialport
+}
+howusage () {
+	echo "Usage: $0 {command} [switch \"parameters\"] ..."
+	echo "Use command \`help\` for more information."
+}
+tester () {
+	default_params "rand -c 1 -f 64"
+	python -m ectf25.utils.tester --port $serialport -s ./secrets/secrets.json $params
+}
+uplink () {
+	default_params "x_c0.json"
+	#uppid=$(pgrep hosttools -a | grep up -m 1 | grep -o -P "[0-9]*") # grep spam bc pgrep: only one pattern can be provided
+	#if [[ $uppid ]]; then 
+	#	kill $uppid
+	#fi
+	python -m ectf25.uplink secrets/secrets.json localhost 2000 1:10:frames/$params	
+}
+satellite () {
+	default_params "1:2001"
+	python -m ectf25.satellite localhost 2000 localhost $params
+}
+tv () {
+	default_params "2001"
+	python -m ectf25.tv.run localhost $params $serialport
+}
+oo () {
+	if (( $killp == 1 )); then
+		echo "Killing openocd..."
+		pkill openocd
+		exit 0
+	else
+		if [[ $(pidof -x openocd) ]]; then
+			pkill openocd
+		fi
+		echo "Establishing openocd connection..."
+		eval "openocd -s scripts/ -f interface/cmsis-dap.cfg -f target/max78000.cfg -c \"bindto 0.0.0.0; init\" $background"
+	fi
+}
+gdb () {
+	if ! [[ $(pidof -x openocd) ]]; then
+		handle_switches "-b" # lazy lol
+		oo
+	fi
+	default_params "max78000.elf"
+	docker run --rm -it --add-host=host.docker.internal:host-gateway -v $bindir:/out --workdir=/root --entrypoint /bin/bash decoder -c " cp -r /out/* /root/ && gdb-multiarch $params -ex \"target remote host.docker.internal:3333\""
+}
+colprint () {
+	term_cols=$(tput cols)
+	numcol="$1"
+	shift
+	for ((i = 0; i < numcol; i++)); do
+			colratio[i]=$1
+			shift
+	done
+
+	max_rows=0
+	col_start=0
+	for ratio in "${colratio[@]}"; do
+		col_preamble=$1
+		shift
+		input=$1
+		shift
+		col_trailer=$1
+		shift
+		row_count=0
+		
+		numerator=${ratio%/*}
+		denominator=${ratio#*/}
+		col_max=$(( (term_cols*numerator)/denominator -${#col_preamble} -${#col_trailer} ))
+
+		while (( ${#input} > 0 )); do
+			if ((col_start > 0)); then
+				tput cuf $col_start
+			fi
+
+			printf "$col_preamble"
+
+			printf "${input::col_max}"
+			input=${input:col_max}
+
+			if ((${#col_trailer} > 0)); then
+				tput cr
+				tput cuf $(( ${#col_preamble} + col_start + col_max ))
+				printf "${col_trailer}"
+			fi
+			tput cud1
+			(( row_count++ ))
+		done
+		col_start=$(( col_max + ${#col_preamble} + ${#col_trailer} ))
+		if ((row_count > 0)); then
+			tput cuu $row_count
+		fi
+		if (( max_rows < row_count )); then
+			max_rows=$row_count
+		fi
+	done
+	tput cud $max_rows
+
+}
+helpprint () {
+
+
+		colprint "3" "1/5" "2/5" "3/5" "" "Commands:"
+		printf "\v"
+
+		colprint "3" "1/5" "2/5" "3/5" "" "" "" "" "help" "    " "" "Display this help"
+		printf "\v"
+
+		colprint "3" "1/5" "2/5" "3/5" "" "" "" "" "gs, gen_secrets" "    " "" "Run ectf25_design.gen_secrets command. Default parameters are \"1 3 4\". This will generate a secrets file for channels 1, 3, and 4."
+		printf "\v"
+
+		colprint "3" "1/5" "2/5" "3/5" "" "" "" "" "bd, build_decoder" "    " "" "Build the decoder for a device using docker. Default parameter is \"0xdeadbeef\" This will build a decoder with ID 0xdeadbeef"
+		printf "\v"
+
+		colprint "3" "1/5" "2/5" "3/5" "" "" "" "" "gb, gen_subscription" "    " "" "Generate a subscription file subscription.bin. Default parameters are \"0xdeadbeef 32 128 1\" This command will create a subscription file called subscription.bin targeting a device with ID 0xDEADBEEF, a start timestamp of 32, and an end timestamp of 128 for channel 1."
+		printf "\v"
+
+		colprint "3" "1/5" "2/5" "3/5" "" "" "" "" "firmware" "    " "" "Flash only the insecure.bin firmware onto the the max78000. Must have insecure.bin in the root directory and OpenOCD installed."
+		printf "\v"
+
+		colprint "3" "1/5" "2/5" "3/5" "" "" "" "" "flash" "    " "" "Flash decoder build binary located at $bindir, to device on port $serialport. When OpenOCD is installed, flash with OpenOCD instead, which is much faster. Must have insecure.bin located in the working directory. When using OpenOCD to flash, $serialport is ignored."
+		printf "\v"
+
+		colprint "3" "1/5" "2/5" "3/5" "" "" "" "" "ls, list" "    " "" "list subscribed channels on the decoder, located at $serialport."
+		printf "\v"
+
+		colprint "3" "1/5" "2/5" "3/5" "" "" "" "" "sub, subscribe" "    " "" "Updates subscribtions using subscription.bin to the decoder at $serialport."
+		printf "\v"
+
+		colprint "3" "1/5" "2/5" "3/5" "" "" "" "" "test, tester" "    " "" "Test frame decoding on decoder at $serialport, without running end to end infrastructure. Default parameters are \"rand -c 1 -f 64\""
+		printf "\v"
+
+		colprint "3" "1/5" "2/5" "3/5" "" "" "" "" "up, uplink" "    " "" "Starts the ectf.uplink command. The uplink is the component of the Satellite TV system responsible for sending encoded frames to the satellite. It will use the encoder from your design to encode frames. It broacasts to port 2000."
+		printf "\v"
+
+		colprint "3" "1/5" "2/5" "3/5" "" "" "" "" "sat, satellite" "    " "" "Starts the ectf.satellite command. The satellite is responsible for broadcasting all frames received from the uplink on port 2000 to all listening TVs on the host computer. Listens to port 2000, broadcasts to TV 1 on port 2001 (DEFAULT) Default parameter is \"1:2001\""
+		printf "\v"
+
+		colprint "3" "1/5" "2/5" "3/5" "" "" "" "" "tv" "    " "" "The TV is responsible for sending encoded frames received from the satellite to a decoder connected to the host computer and returning the decoded result. Default parameters is \"2001\""
+		printf "\v"
+
+		colprint "3" "1/5" "2/5" "3/5" "" "" "" "" "py, python" "    " "" "Runs a python command in the ectf virtual environment Default parameter is \"-m pip list\""
+		printf "\v"
+
+		colprint "3" "1/5" "2/5" "3/5" "" "" "" "" "oo, openocd" "    " "" "Starts an openocd debugging session with the max78000 in the background. Use command \`ko\` to kill this session. The session is automatically restarted every time the command is called."
+		printf "\v"
+
+		colprint "3" "1/5" "2/5" "3/5" "" "" "" "" "gdb" "    " "" "Starts a gdb debugging session and automatically connects to to any currently running openocd sessions. If one is not running, it will start one automatically. It debugs using the elf file located at $bindir. Use option -b to temporarily change this directory. Default parameter is max78000.elf"
+		printf "\v"
+
+		colprint "3" "1/5" "2/5" "3/5" "" "Switches:"
+		printf "\v"
+
+		colprint "3" "1/5" "2/5" "3/5" "" "" "" "" " -h, --help" "    " "" "Display this help."
+		printf "\v"
+
+		colprint "3" "1/5" "2/5" "3/5" "" "" "" "" " -p, --parameters" "    " "" "Override the default parameters for a {command}. Example: sat -p \"1:2001 2:2002\""
+		printf "\v"
+
+		colprint "3" "1/5" "2/5" "3/5" "" "" "" "" " -b, --bindir" "    " "" "Temporarily change the directory where the decoder binary is stored. Edit this script to change it perminatly. It is currently set to $set *0x2001fff8=0bindir Example: bd -b \"./build/\""
+		printf "\v"
+
+		colprint "3" "1/5" "2/5" "3/5" "" "" "" "" " -s, --serialport" "    " "" "Temporarily change the location of the serial device port. Example: flash -s \"/dev/tty.usbmodem11302\""
+		printf "\v"
+
+		colprint "3" "1/5" "2/5" "3/5" "" "Examples:"
+		printf "\v"
+
+		colprint "3" "1/5" "2/5" "3/5" "" "" "" "" "Change the default build location, build the decoder, flash it, and start a debugging session. -b ./bout/ bd flash gdb"
+		printf "\v"
+}
+init
+handle_commands "$@"

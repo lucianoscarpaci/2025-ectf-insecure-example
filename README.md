@@ -99,6 +99,7 @@ python -m pip install ./tools/
 python -m pip install -e ./design/
 ```
 
+
 ### Building the deployment
 
 Optionally, shared secrets used by the decoder and encoder can be generated. A directory containing shared secrets
@@ -111,7 +112,7 @@ This will generate a secrets file for channels 1, 3, and 4.
 
 ```bash
 mkdir secrets
-python -m ectf25_design.gen_secrets secrets/secrets.json 1 3 4
+./hosttools gs 1 3 4
 ```
 
 ### Building the Decoder
@@ -124,10 +125,7 @@ directory.
 ### Mac:
 
 ```bash
-cd /Users/lucianoscarpaci/Documents/GitHub/2025-ectf-insecure-example/decoder/
-docker build -t decoder .
-# Verify the docker image
-docker image ls
+./hosttools build_decoder
 # The volume commands specify the directories to mount to the container
 docker run --rm \
   -v "$(pwd)/./build_out:/out" \
@@ -200,7 +198,7 @@ options:
 this is two parts specifying the path to the firmware, and the second is to the connected device.
 
 ```bash
-python -m ectf25.utils.flash ./decoder/build_out/max78000.bin /dev/tty.usbmodem14202
+./hosttools flash -b ./decoder/build_out/max78000.bin
 ```
 
 #### PowerShell
@@ -233,7 +231,7 @@ options:
 #### Linux
 
 ```bash
-python -m ectf25.tv.list /dev/tty.usbmodem14202
+./hosttools ls
 ```
 
 ### Subscription Update Tool

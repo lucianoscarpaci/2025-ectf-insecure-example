@@ -114,13 +114,11 @@ directory.
 
 ```bash
 ./hosttools build_decoder
-# The volume commands specify the directories to mount to the container
-docker run --rm \
-  -v "$(pwd)/./build_out:/out" \
-  -v "$(pwd)/./:/decoder" \
-  -v "$(pwd)/./../secrets:/secrets" \
-  -e DECODER_ID=0xdeadbeef \
-  decoder
+```
+Compile your firmware with hosttools. This will create a firmware binary in the `build_out` directory.
+  
+```bash
+./hosttools compile
 ```
 
 #### Note: If the build is hanging indefinitely, try restarting Docker. If that does not resolve the issue, a system restart should fix the issue.

@@ -1,5 +1,5 @@
 ## Project .gitignore ##
-
+requirements.txt
 .DS_Store
 .vscode/
 **/gcc

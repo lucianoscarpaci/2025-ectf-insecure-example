@@ -77,27 +77,6 @@ all of the required packages (ideally into a virtual environment). You can
 install packages from the included `pyproject.toml` file in the root of the
 design and tools directories. This file should not be modified.
 
-### Mac:
-
-```bash
-# Create a virtual environment in the root of the design
-cd /Users/lucianoscarpaci/Documents/GitHub/2025-ectf-insecure-example
-# First time use do this asdf command
-asdf local python 3.11.0
-# Verify the python == 3.11
-python --version
-# Create the virtual environment
-python -m venv .venv --prompt ectf-example
-
-# Enable virtual environment
-. ./.venv/bin/activate
-
-# Install the host tools
-python -m pip install ./tools/
-
-# Install the host design elements as an editable module
-python -m pip install -e ./design/
-```
 
 #### Flashing Bootloader with openocd command
 Start nix-shell in the project directory:
@@ -107,10 +86,6 @@ nix-shell
 Flash the (insecure.bin) bootloader with openocd:
 ```bash
 ./hosttools firmware
-```
-Exit the nix-shell:
-```bash
-exit
 ```
 
 ### Building the deployment
@@ -204,7 +179,7 @@ options:
 
 ### **Example Utilization**
 
-#### Mac
+#### Mac/Linux
 this is two parts specifying the path to the firmware, and the second is to the connected device.
 
 ```bash

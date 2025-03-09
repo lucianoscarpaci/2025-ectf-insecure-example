@@ -137,6 +137,13 @@ handle_commands () {
 				shift $shift_count
 				flash "$@"
 				;;
+			compile)
+			    echo "Compiling..."
+				shift
+				handle_switches "$@"
+				shift $shift_count
+				compile "$@"
+				;;
 			list | ls)
 				echo "Listing Subs..."
 				shift
@@ -256,20 +263,23 @@ firmware () {
 	fi
 }
 flash () {
-	default_params "max78000"
-	if [[ -z $(command -v openocd) ]]; then
-		echo "openocd not found, flashing with python tools. [SLOW]"
-		python -m ectf25.utils.flash ${bindir%/}/$params.bin $serialport $secure
-	elif [[ -z $(ls | grep insecure.bin) ]]; then
-		echo "insecure.bin not found, flashing with python tools. [SLOW]"
-		python -m ectf25.utils.flash $bindir/$params.bin $serialport $secure
-	elif [[ -n $secure ]]; then
-		echo "Secure flag enabled, flashing with python tools."
-		python -m ectf25.utils.flash $bindir/$params.bin $serialport $secure
-	else
-		echo "Flashing with openocd. [FAST]"
-		openocd -s scripts/ -f interface/cmsis-dap.cfg -f target/max78000.cfg -c "init; reset halt; max32xxx mass_erase 0;  program insecure.bin verify 0x10000000; program ${bindir%/}/$params.bin verify 0x10002000; program ${bindir%/}/$params.elf verify reset exit "
-	fi
+    default_params "max78000"
+    if [[ -n $secure ]]; then
+        echo "Secure flag enabled, flashing with python tools."
+    else
+        echo "Flashing with python tools."
+    fi
+    python -m ectf25.utils.flash ${bindir%/}/$params.bin $serialport $secure
+}
+compile() {
+	pushd ./decoder > /dev/null
+    docker run --rm \
+       -v "$(pwd)/./build_out:/out" \
+       -v "$(pwd)/./:/decoder" \
+       -v "$(pwd)/./../secrets:/secrets" \
+       -e DECODER_ID=0xdeadbeef \
+       decoder
+    popd > /dev/null
 }
 list() {
 	python -m ectf25.tv.list $serialport

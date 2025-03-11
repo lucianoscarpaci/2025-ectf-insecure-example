@@ -1,39 +1,39 @@
-# eCTF Insecure Example
+# eCTF Insecure Example 🛰️
 
 This repository holds the insecure example design for an eCTF Satellite TV System.
 
-## Layout
+## Layout 📁
 
-- `decoder/` - Firmware for the television decoder.
-    - `project.mk` - This file defines project specific variables included in the Makefile
-    - `Makefile` - This makefile is invoked by the eCTF tools when creating a decoder.
-    - `Dockerfile` - Describes the build environment used by eCTF build tools.
-    - `inc/` - Directory with c header files
-    - `src/` - Directory with c source files
-    - `wolfssl/` - Location to place wolfssl library for included Crypto Example
-- `design/` - Host design elements
-    - `ectf25_design/` - Host design source code
-        - `encoder.py` - Encodes frames
-        - `gen_secrets.py` - Generates shared secrets
-        - `gen_subscription.py` - Generates subscription updates
-    - `pyproject.toml` - File that tells pip how to install this module
-- `frames/` - Example frame data
-- `tools/` - Host tools - DO NOT MODIFY ANYTHING IN THIS DIRECTORY
-    - `ectf25/` - Directory with tool source
-        - `tv/` - Sends received frames to the decoder
-            - `list.py` - Tool to list active decoder subscriptions
-            - `subscribe.py` - Tool to update decoder subscriptions
-        - `uplink/` - Encodes frames and sends them to satellite
-        - `utils/` - Host tool utilities
-            - `decoder.py` - Interface with decoder hardware/firmware. This file should not be directly executed.
-            - `flash.py` - Firmware update utility
-            - `stress_test.py` - Utility for testing decoder
-            - `tester.py` - Utility for testing decoder
-        - `satellite.py` - Broadcasts frames from uplink to all decoders
-    - `pyproject.toml` - File that tells pip how to install this module
-- `reference/` - Example code for the chacha20-poly1305 encryption and decryption using libsodium in C and Ruby.
+- `decoder/` 📁 - Firmware for the television decoder.
+    - `project.mk` 📄 - This file defines project specific variables included in the Makefile
+    - `Makefile` 📄 - This makefile is invoked by the eCTF tools when creating a decoder.
+    - `Dockerfile` 📄 - Describes the build environment used by eCTF build tools.
+    - `inc/` 📁 - Directory with c header files
+    - `src/` 📁 - Directory with c source files
+    - `wolfssl/` 📁 - Location to place wolfssl library for included Crypto Example
+- `design/` 📁 - Host design elements
+    - `ectf25_design/` 📁 - Host design source code
+        - `encoder.py` 📄 - Encodes frames
+        - `gen_secrets.py` 📄 - Generates shared secrets
+        - `gen_subscription.py` 📄 - Generates subscription updates
+    - `pyproject.toml` 📄 - File that tells pip how to install this module
+- `frames/` 📁 - Example frame data
+- `tools/` 📁 - Host tools - DO NOT MODIFY ANYTHING IN THIS DIRECTORY
+    - `ectf25/` 📁 - Directory with tool source
+        - `tv/` 📁 - Sends received frames to the decoder
+            - `list.py` 📄 - Tool to list active decoder subscriptions
+            - `subscribe.py` 📄 - Tool to update decoder subscriptions
+        - `uplink/` 📁 - Encodes frames and sends them to satellite
+        - `utils/` 📁 - Host tool utilities
+            - `decoder.py` 📄 - Interface with decoder hardware/firmware. This file should not be directly executed.
+            - `flash.py` 📄 - Firmware update utility
+            - `stress_test.py` 📄 - Utility for testing decoder
+            - `tester.py` 📄 - Utility for testing decoder
+        - `satellite.py` 📄 - Broadcasts frames from uplink to all decoders
+    - `pyproject.toml` 📄 - File that tells pip how to install this module
+- `reference/` 📁 - Example code for the chacha20-poly1305 encryption and decryption using libsodium in C and Ruby.
 
-## Usage and Requirements
+## Usage and Requirements 🔧
 
 This repository contains three main elements: firmware source code, host design elements, and tooling.
 
@@ -49,7 +49,7 @@ to change some details of the command for their own machine (e.g. '`python` -> `
 
 **Note:** Command listed under any "Example Utilization" section should be executed from the root directory of this repository.
 
-### Environment Build
+### Environment Build 🚀
 
 The environment is built with Docker, which should install all necessary packages for running the
 design in a reproducible fashion.
@@ -58,19 +58,19 @@ When building for the first time, this may take some time (10+ minutes) to
 complete. Furthermore, it is recommended that you use a wired internet
 connection when building for the first time.
 
-### Host Tools
+### Host Tools 🧰
 
 Host Tools includes everything in the `tools` directory. These do not need to be modified by teams
 except for local testing. Your design should work with the standardized
 interface between host and Decoder hardware. The host tools will pass any
 required arguments to the Decoder hardware and process all relevant output.
 
-### Decoder
+### Decoder 📺
 
 When building the decoder, the `Makefile` in the decoder directory will be
 invoked by the Docker run command.
 
-## Using the eCTF Tools
+## Using the eCTF Tools ⚙️
 
 In order to run the eCTF Tools, you must first ensure that you have installed
 all of the required packages (ideally into a virtual environment). You can
@@ -92,7 +92,7 @@ python -m pip install ./tools/
 # Install the host design elements as an editable module
 python -m pip install -e ./design/
 ```
-#### Flashing Bootloader with openocd command
+#### Flashing Bootloader with openocd command ⚡
 Start nix-shell in the project directory:
 ```bash
 nix-shell
@@ -137,7 +137,7 @@ Compile your firmware with hosttools. This will create a firmware binary in the 
 
 #### Note: If the build is hanging indefinitely, try restarting Docker. If that does not resolve the issue, a system restart should fix the issue.
 
-## Generating Subscription Updates [After flashing the decoder has been done.]
+## Generating Subscription Updates [After flashing the decoder has been done.] 🔒
 
 Subscription updates are generated using the `gen_subscription.py` script.
 The `gen_subscription` function will be the only feature that teams will need to update.
@@ -302,7 +302,7 @@ channels 3 and 4.
 ./hosttools test
 ```
 
-## Running the Satellite and Encoder
+## Running the Satellite and Encoder 📡
 
 To run all of the infrastructure, you will need to first start the uplink. Then, in a
 separate terminal window, start the satellite. Finally, start a TV for every decoder

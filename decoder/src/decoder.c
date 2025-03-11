@@ -21,23 +21,8 @@
 #include "mxc_delay.h"
 #include "simple_flash.h"
 #include "host_messaging.h"
-#include "trng.h"
 #include "simple_uart.h"
-
-volatile int wait;
-volatile int callback_result;
-
-/* Code between this #ifdef and the subsequent #endif will
-*  be ignored by the compiler if CRYPTO_EXAMPLE is not set in
-*  the projectk.mk file. */
-#ifdef CRYPTO_EXAMPLE
-/* The simple crypto example included with the reference design is intended
-*  to be an example of how you *may* use cryptography in your design. You
-*  are not limited nor required to use this interface in your design. It is
-*  recommended for newer teams to start by only using the simple crypto
-*  library until they have a working design. */
-#include "simple_crypto.h"
-#endif  //CRYPTO_EXAMPLE
+#include "key.h"
 
 /**********************************************************
  ******************* PRIMITIVE TYPES **********************
@@ -243,10 +228,14 @@ int decode(pkt_len_t pkt_len, frame_packet_t *new_frame) {
     char output_buf[128] = {0};
     uint16_t frame_size;
     channel_id_t channel;
+    timestamp_t timestamp;
+    uint8_t frames[FRAME_SIZE];
+    channel = new_frame->channel;
+    timestamp = new_frame->timestamp;
+    memcpy(frames, new_frame->data, FRAME_SIZE);
 
     // Frame size is the size of the packet minus the size of non-frame elements
-    frame_size = pkt_len - (sizeof(new_frame->channel) + sizeof(new_frame->timestamp));
-    channel = new_frame->channel;
+    frame_size = pkt_len - (sizeof(channel) + sizeof(timestamp));
     // Check that we are subscribed to the channel...
     print_debug("Checking subscription\n");
     if (is_subscribed(channel)) {
@@ -255,9 +244,8 @@ int decode(pkt_len_t pkt_len, frame_packet_t *new_frame) {
         *  Do any extra decoding here before returning the result to the host. */
        // only the channel and timestamp are encoded, the frame is not encoded.
        // in theory, it should look similar to the following:
-        uint8_t key[8] = {0xF, 0xB3, 0x14, 0x91, 0x3A, 0xCA, 0x44, 0xB6};
-        xor_decrypt(new_frame->data, key, 8);
-        write_packet(DECODE_MSG, new_frame->data, frame_size);
+        xor_decrypt(frames, (uint8_t*)key, frame_size);
+        write_packet(DECODE_MSG, frames, frame_size);
         return 0;
     } else {
         STATUS_LED_RED();
@@ -310,64 +298,6 @@ void init() {
         // if uart fails to initialize, do not continue to execute
         while (1);
     }
-}
-
-/* Code between this #ifdef and the subsequent #endif will
-*  be ignored by the compiler if CRYPTO_EXAMPLE is not set in
-*  the projectk.mk file. */
-#ifdef CRYPTO_EXAMPLE
-void crypto_example(void) {
-    // Example of how to utilize included simple_crypto.h
-
-    // This string is 16 bytes long including null terminator
-    // This is the block size of included symmetric encryption
-    char *data = "Crypto Example!";
-    uint8_t ciphertext[BLOCK_SIZE];
-    uint8_t key[KEY_SIZE];
-    uint8_t hash_out[HASH_SIZE];
-    uint8_t decrypted[BLOCK_SIZE];
-
-    char output_buf[128] = {0};
-
-    // Zero out the key
-    bzero(key, BLOCK_SIZE);
-
-    // Encrypt example data and print out
-    encrypt_sym((uint8_t*)data, BLOCK_SIZE, key, ciphertext);
-    print_debug("Encrypted data: \n");
-    print_hex_debug(ciphertext, BLOCK_SIZE);
-
-    // Hash example encryption results
-    hash(ciphertext, BLOCK_SIZE, hash_out);
-
-    // Output hash result
-    print_debug("Hash result: \n");
-    print_hex_debug(hash_out, HASH_SIZE);
-
-    // Decrypt the encrypted message and print out
-    decrypt_sym(ciphertext, BLOCK_SIZE, key, decrypted);
-    sprintf(output_buf, "Decrypted message: %s\n", decrypted);
-    print_debug(output_buf);
-}
-#endif  //CRYPTO_EXAMPLE
-
-/** @brief This is the TRNG hardware key generation function 
- * @note this function is only for temporary key generation
-*/
-void GenerateTRNG(void) {
-    char output_buf[128] = {0};
-    uint8_t rnd8[8];
-    int i;
-    MXC_TRNG_Init();
-    print_debug("TRNG Initialized\n");
-    for (i = 0; i < 8; i++) {
-        rnd8[i] = MXC_TRNG_RandomInt();
-    }
-    //generate a 128-bit output key that looks like {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
-    sprintf(output_buf, "Encryption key: {0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X}", rnd8[0], rnd8[1], rnd8[2], rnd8[3], rnd8[4], rnd8[5], rnd8[6], rnd8[7]);
-    print_debug(output_buf);
-    
-    MXC_TRNG_Shutdown();
 }
 /*************************************************************
  ********************* Status LED Cycler *********************
@@ -426,15 +356,6 @@ int main(void) {
         // Handle list command
         case LIST_MSG:
             STATUS_LED_CYAN();
-
-            #ifdef CRYPTO_EXAMPLE
-                // Run the crypto example
-                // TODO: Remove this from your design
-                crypto_example();
-            #endif // CRYPTO_EXAMPLE
-
-            // Generate nonces using the TRNG
-            GenerateTRNG();
             list_channels();
             break;
 

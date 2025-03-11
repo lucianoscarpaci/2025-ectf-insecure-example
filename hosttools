@@ -306,7 +306,7 @@ uplink () {
 	#if [[ $uppid ]]; then 
 	#	kill $uppid
 	#fi
-	python -m ectf25.uplink secrets/secrets.json localhost 2000 1:30:frames/$params	
+	python -m ectf25.uplink secrets/secrets.json localhost 2000 1:3:frames/$params	
 }
 satellite () {
 	default_params "1:2001"

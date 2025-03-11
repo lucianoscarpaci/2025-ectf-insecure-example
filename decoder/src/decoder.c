@@ -43,6 +43,7 @@
 #define DEFAULT_CHANNEL_TIMESTAMP 0xFFFFFFFFFFFFFFFF
 // This is a canary value so we can confirm whether this decoder has booted before
 #define FLASH_FIRST_BOOT 0xDEADBEEF
+
 /**********************************************************
  ********************* STATE MACROS ***********************
  **********************************************************/
@@ -205,6 +206,16 @@ int update_subscription(pkt_len_t pkt_len, subscription_update_packet_t *update)
     // Success message with an empty body
     write_packet(SUBSCRIBE_MSG, NULL, 0);
     return 0;
+}
+/** @brief This is where the decryption function is stored.
+ * @param data A pointer to the data to be decrypted.
+ * @param key A pointer to the key to be used for decryption.
+ * @param size The size of the data to be decrypted.
+ */
+void xor_decrypt(uint8_t *data, uint8_t *key, size_t size) {
+    for (size_t i = 0; i < size; i++) {
+        data[i] ^= key[i % 8];  // XOR each byte with the key
+    }
 }
 /** @brief Processes a packet containing frame data.
  *

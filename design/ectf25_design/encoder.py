@@ -14,13 +14,11 @@ import argparse
 import struct
 import json
 import base64
-from loguru import logger
 from nacl.signing import VerifyKey
 from nacl.exceptions import BadSignatureError
+from loguru import logger
 import hashlib
 import os
-import secrets as pysecrets
-from wolfcrypt.ciphers import Aes, MODE_CBC
 
 class Encoder:
     def __init__(self, secrets: bytes):
@@ -41,8 +39,9 @@ class Encoder:
         self.key = secrets["key"]
         self.public_key = secrets["public_key"]
         self.signature = secrets["signature"]
+
         self.validate_secrets()
-    
+
     def validate_secrets(self):
         """Validate the secrets file
 
@@ -105,6 +104,7 @@ class Encoder:
         with open(file_path, 'rb') as f:
             key = f.read()
         original_bytes = struct.pack("<IQ", channel, timestamp)
+        encrypted_frame = self.encrypt_frame(frame, key)
         encoded_frame = original_bytes + encrypted_frame
         return encoded_frame
 

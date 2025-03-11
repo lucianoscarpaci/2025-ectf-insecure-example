@@ -18,6 +18,8 @@ import base64
 from loguru import logger
 from nacl.signing import VerifyKey
 from nacl.exceptions import BadSignatureError
+import hashlib
+import os
 
 def gen_subscription(
     secrets: bytes, device_id: int, start: int, end: int, channel: int
@@ -58,8 +60,8 @@ def gen_subscription(
         logger.error(f"An error occured while verifying the ED25519 signature: {e}")
         raise
 
-    subscriptions = struct.pack("<IQQI", device_id, start, end, channel)
-    return subscriptions
+    subscription_bytes = struct.pack("<IQQI", device_id, start, end, channel)
+    return subscription_bytes
 
 
 def parse_args():

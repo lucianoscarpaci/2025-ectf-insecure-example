@@ -77,7 +77,21 @@ all of the required packages (ideally into a virtual environment). You can
 install packages from the included `pyproject.toml` file in the root of the
 design and tools directories. This file should not be modified.
 
+#### Preliminary Python venv setup for hosttools
+### Mac/Linux
+```bash
+cd <example_root>
+python -m venv .venv --prompt ectf-example
 
+# Enable virtual environment
+. ./.venv/bin/activate
+
+# Install the host tools
+python -m pip install ./tools/
+
+# Install the host design elements as an editable module
+python -m pip install -e ./design/
+```
 #### Flashing Bootloader with openocd command
 Start nix-shell in the project directory:
 ```bash

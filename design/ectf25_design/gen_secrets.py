@@ -12,7 +12,7 @@ Copyright: Copyright (c) 2025 The MITRE Corporation
 
 import argparse
 import json
-import secrets as pysecrets
+import secrets
 import hashlib
 import base64
 from nacl.signing import SigningKey
@@ -43,8 +43,7 @@ def gen_secrets(channels: list[int]) -> bytes:
         public_key = signing_key.verify_key
         # Extract signature (ED25519) from signed message
         signature = signed_message.signature
-        # result including channels, sk, iv, public key, and signature
-        
+        # result including channels, nonce, public key, and signature
         result = {
             "channels": channels,
             "key": base64.b64encode(key).decode('utf-8'),
@@ -105,16 +104,6 @@ def main():
     with open(args.secrets_file, "wb" if args.force else "xb") as f:
         # Dump the secrets to the file
         f.write(secrets)
-    
-    secrets_header = args.secrets_file.with_name('secrets.h')
-    with open(secrets_header, "w") as f:
-        f.write(f"#ifndef SECRETS_H\n#define SECRETS_H\n\n")
-        f.write(f"#define SECRET_SK \"{base64.b64encode(sk).decode('utf-8')}\"\n")
-        f.write(f"#define SECRET_IV \"{base64.b64encode(iv).decode('utf-8')}\"\n")
-        f.write(f"#define SECRET_CHANNEL {args.channels}\n\n")
-        f.write(f"#define SECRET_PUBLIC_KEY \"{base64.b64encode(signing_key.verify_key.encode()).decode('utf-8')}\"\n")
-        f.write(f"#define SECRET_SIGNATURE \"{base64.b64encode(signature).decode('utf-8')}\"\n\n")
-        f.write(f"#endif\n")
 
     key_bin = args.secrets_file.with_name("key.bin")
     with open(key_bin, "wb") as f:

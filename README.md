@@ -1,6 +1,6 @@
-# eCTF Insecure Example 🛰️
+# eCTF Satellite TV System 🛰️
 
-This repository holds the insecure example design for an eCTF Satellite TV System.
+This repository holds the design for an eCTF Satellite TV System.
 
 ## Layout 📁
 
@@ -302,13 +302,13 @@ channels 3 and 4.
 ./hosttools test
 ```
 
-## Running the Satellite and Encoder 📡
+## Running the Satellite and Encoder 📡 🛰️ 📺
 
 To run all of the infrastructure, you will need to first start the uplink. Then, in a
 separate terminal window, start the satellite. Finally, start a TV for every decoder
 being tested while the satellite is running.
 
-### Uplink
+### Uplink 📡
 
 The uplink is the component of the Satellite TV system responsible for sending encoded
 frames to the satellite. It will use the encoder from your design to encode frames.
@@ -335,7 +335,7 @@ options:
 ```bash
 ./hosttools uplink
 ```
-### Satellite
+### Satellite 🛰️
 
 The satellite is responsible for broadcasting all frames received from the uplink to all
 listening TVs on the host computer.
@@ -362,7 +362,7 @@ options:
 ./hosttools satellite
 ```
 
-### TV
+### TV 📺
 
 The TV is responsible for sending encoded frames received from the satellite to a
 decoder connected to the host computer and returning the decoded result.

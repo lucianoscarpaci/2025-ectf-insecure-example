@@ -38,10 +38,7 @@ class Encoder:
 
         # Load the example secrets for use in Encoder.encode
         # This will be "EXAMPLE" in the reference design"
-        base64_sk = secrets["sk"]
-        base64_iv = secrets["iv"]
-        self.sk = base64.b64decode(base64_sk)
-        self.iv = base64.b64decode(base64_iv)
+        self.key = secrets["key"]
         self.public_key = secrets["public_key"]
         self.signature = secrets["signature"]
         self.validate_secrets()
@@ -53,8 +50,8 @@ class Encoder:
         raise an exception if the secrets are invalid
         """
         try:
-        # Decode the nonce, public key and signature from Base64
-            sk = self.sk
+        # Decode the key, public key and signature from Base64
+            key = base64.b64decode(self.key)
             public_key = base64.b64decode(self.public_key)
             signature = base64.b64decode(self.signature)
 
@@ -62,7 +59,7 @@ class Encoder:
             verify_key = VerifyKey(public_key)
 
             # Verify the signed message
-            verify_key.verify(sk, signature)
+            verify_key.verify(key, signature)
             logger.success(f"PASSED: The ED25519 signature is valid.")
         except BadSignatureError:
             logger.error(f"FAILED: The ED25519 signature is invalid.")
@@ -70,6 +67,15 @@ class Encoder:
         except Exception as e:
             logger.error(f"An error occurred during verification: {e}")
             raise
+
+    def xor_encrypt(self, data: bytes, key: bytes, size: int) -> bytes:
+        result = bytearray(data)
+        for i in range(size):
+            result[i] ^= key[i % len(key)]
+        return bytes(result)
+    
+    def encrypt_frame(self, frame: bytes, key: bytes) -> bytes:
+        return self.xor_encrypt(frame, key, len(frame))
 
     def encode(self, channel: int, frame: bytes, timestamp: int) -> bytes:
         """The frame encoder function
@@ -89,8 +95,15 @@ class Encoder:
 
         :returns: The encoded frame, which will be sent to the Decoder
         """
-        cipher = Aes(self.sk, MODE_CBC, self.iv)
-        encrypted_frame = cipher.encrypt(frame + b"\x00" * (16 - len(frame) % 16))
+        dir = os.path.dirname(os.path.realpath(__file__))
+        file_path = os.path.join(dir, '../../secrets/key.bin')
+
+        if not os.path.exists(file_path):
+            logger.error(f"Key file not found: {file_path}")
+            raise FileNotFoundError(f"Key file not found: {file_path}")
+
+        with open(file_path, 'rb') as f:
+            key = f.read()
         original_bytes = struct.pack("<IQ", channel, timestamp)
         encoded_frame = original_bytes + encrypted_frame
         return encoded_frame

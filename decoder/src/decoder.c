@@ -22,22 +22,7 @@
 #include "simple_flash.h"
 #include "host_messaging.h"
 #include "simple_uart.h"
-#include "secrets.h"
-#include "wolfssl/wolfcrypt/aes.h"
-#include "wolfssl/options.h"
-#include "wolfssl/wolfcrypt/coding.h"
-
-/* Code between this #ifdef and the subsequent #endif will
-*  be ignored by the compiler if CRYPTO_EXAMPLE is not set in
-*  the projectk.mk file. */
-#ifdef CRYPTO_EXAMPLE
-/* The simple crypto example included with the reference design is intended
-*  to be an example of how you *may* use cryptography in your design. You
-*  are not limited nor required to use this interface in your design. It is
-*  recommended for newer teams to start by only using the simple crypto
-*  library until they have a working design. */
-#include "simple_crypto.h"
-#endif  //CRYPTO_EXAMPLE
+#include "key.h"
 
 /**********************************************************
  ******************* PRIMITIVE TYPES **********************
@@ -237,12 +222,6 @@ int decode(pkt_len_t pkt_len, frame_packet_t *new_frame) {
     channel = new_frame->channel;
     timestamp = new_frame->timestamp;
     memcpy(frames, new_frame->data, FRAME_SIZE);
-    uint8_t decoded_sk[KEY_SIZE];
-    uint8_t decoded_iv[BLOCK_SIZE];
-    size_t sk_len, iv_len;
-
-    Base64_Decode(decoded_sk, KEY_SIZE, SECRET_SK, &sk_len);
-    Base64_Decode(decoded_iv, BLOCK_SIZE, SECRET_IV, &iv_len);
 
     // Frame size is the size of the packet minus the size of non-frame elements
     frame_size = pkt_len - (sizeof(channel) + sizeof(timestamp));
@@ -252,8 +231,9 @@ int decode(pkt_len_t pkt_len, frame_packet_t *new_frame) {
         print_debug("Subscription Valid\n");
         /* The reference design doesn't need any extra work to decode, but your design likely will.
         *  Do any extra decoding here before returning the result to the host. */
-        // Write the decrypted packet
-        decrypt_aes_cbc(frames, frame_size, (uint8_t*)decoded_sk, (uint8_t*)decoded_iv, frames);
+       // only the channel and timestamp are encoded, the frame is not encoded.
+       // in theory, it should look similar to the following:
+        xor_decrypt(frames, (uint8_t*)key, frame_size);
         write_packet(DECODE_MSG, frames, frame_size);
         return 0;
     } else {
@@ -308,46 +288,6 @@ void init() {
         while (1);
     }
 }
-
-/* Code between this #ifdef and the subsequent #endif will
-*  be ignored by the compiler if CRYPTO_EXAMPLE is not set in
-*  the projectk.mk file. */
-#ifdef CRYPTO_EXAMPLE
-void crypto_example(void) {
-    // Example of how to utilize included simple_crypto.h
-
-    // This string is 16 bytes long including null terminator
-    // This is the block size of included symmetric encryption
-    char *data = "Crypto Example!";
-    uint8_t ciphertext[BLOCK_SIZE];
-    uint8_t key[KEY_SIZE];
-    uint8_t hash_out[HASH_SIZE];
-    uint8_t decrypted[BLOCK_SIZE];
-
-    char output_buf[128] = {0};
-
-    // Zero out the key
-    bzero(key, BLOCK_SIZE);
-
-    // Encrypt example data and print out
-    encrypt_aes_cbc((uint8_t*)data, BLOCK_SIZE, (uint8_t*)SECRET_SK, (uint8_t*)SECRET_IV, ciphertext);
-    print_debug("Encrypted data: \n");
-    print_hex_debug(ciphertext, BLOCK_SIZE);
-
-    // Hash example encryption results
-    hash(ciphertext, BLOCK_SIZE, hash_out);
-
-    // Output hash result
-    print_debug("Hash result: \n");
-    print_hex_debug(hash_out, HASH_SIZE);
-
-    // Decrypt the encrypted message and print out
-    decrypt_aes_cbc(ciphertext, BLOCK_SIZE, (uint8_t*)SECRET_SK, (uint8_t*)SECRET_IV, decrypted);
-    sprintf(output_buf, "Decrypted message: %s\n", decrypted);
-    print_debug(output_buf);
-}
-#endif  //CRYPTO_EXAMPLE
-
 /*************************************************************
  ********************* Status LED Cycler *********************
  ************************************************************/
@@ -405,14 +345,6 @@ int main(void) {
         // Handle list command
         case LIST_MSG:
             STATUS_LED_CYAN();
-
-            #ifdef CRYPTO_EXAMPLE
-                // Run the crypto example
-                // TODO: Remove this from your design
-                crypto_example();
-            #endif // CRYPTO_EXAMPLE
-
-            
             list_channels();
             break;
 

@@ -33,28 +33,28 @@ def gen_secrets(channels: list[int]) -> bytes:
     :returns: Contents of the secrets file
     """
     try:
-        # Generate random bytes
-        sk = pysecrets.token_bytes(16)
-        iv = pysecrets.token_bytes(16)
+        # Generate an 8-byte key
+        key = secrets.token_bytes(8)
         # Generate a new ED25519 signing key
         signing_key = SigningKey.generate()
         # Signs the nonce using the signing key
-        signed_message = signing_key.sign(sk)
+        signed_message = signing_key.sign(key)
+        # define the public key
+        public_key = signing_key.verify_key
         # Extract signature (ED25519) from signed message
         signature = signed_message.signature
         # result including channels, sk, iv, public key, and signature
         
         result = {
             "channels": channels,
-            "sk": base64.b64encode(sk).decode('utf-8'),
-            "iv": base64.b64encode(iv).decode('utf-8'),
-            "public_key": base64.b64encode(signing_key.verify_key.encode()).decode('utf-8'),
-            "signature": base64.b64encode(signature).decode('utf-8')
+            "key": base64.b64encode(key).decode('utf-8'),
+            "public_key": base64.b64encode(public_key.encode()).decode('utf-8'),
+            "signature": base64.b64encode(signature).decode('utf-8'),
         }
     except Exception as e:
         logger.error(f"An error occured while generating secrets: {e}")
         raise
-    return json.dumps(result).encode(), sk, iv, signing_key, signature
+    return json.dumps(result).encode(), key, public_key, signature
 
 
 
@@ -93,7 +93,7 @@ def main():
     # Parse the command line arguments
     args = parse_args()
 
-    secrets, sk, iv, signing_key, signature = gen_secrets(args.channels)
+    secrets, key, public_key, signature = gen_secrets(args.channels)
 
     # Print the generated secrets for your own debugging
     # Attackers will NOT have access to the output of this, but feel free to remove
@@ -114,6 +114,23 @@ def main():
         f.write(f"#define SECRET_CHANNEL {args.channels}\n\n")
         f.write(f"#define SECRET_PUBLIC_KEY \"{base64.b64encode(signing_key.verify_key.encode()).decode('utf-8')}\"\n")
         f.write(f"#define SECRET_SIGNATURE \"{base64.b64encode(signature).decode('utf-8')}\"\n\n")
+        f.write(f"#endif\n")
+
+    key_bin = args.secrets_file.with_name("key.bin")
+    with open(key_bin, "wb") as f:
+        f.write(bytes(key))
+    
+    key_header = args.secrets_file.with_name("key.h")
+    # write a key.h file containing a key that can be used in the C code
+    # example of the key code in C: unsigned char key[] = {0xF, 0xB3, 0x14, 0x91, 0x3A, 0xCA, 0x44, 0xB6};
+    with open(key_header, "w") as f:
+        f.write(f"#ifndef KEY_H\n#define KEY_H\n\n")
+        f.write(f"uint8_t key[8] = {{")
+        for i, byte in enumerate(key):
+            f.write(f"0x{byte:02X}")
+            if i < len(key) - 1:
+                f.write(", ")
+        f.write("};\n")
         f.write(f"#endif\n")
 
     # For your own debugging. Feel free to remove

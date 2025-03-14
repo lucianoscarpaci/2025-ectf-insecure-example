@@ -292,12 +292,6 @@ options:
 
 #### Mac/Linux
 
-This is very important! This will check the security whether it is correct or not.
-The below checks for channel 1. It should return subscription because we subscribed to it
-already earler. Now change the -c argument to 2 and it should crash because we didnt subscribe to 
-channel 2. Changing the channel to 3 and 4 should work because we made a subscription to 
-channels 3 and 4.
-
 ```bash
 ./hosttools test
 ```

@@ -292,7 +292,7 @@ options:
 
 #### Mac/Linux
 
-```bash
+```
 ./hosttools test
 ```
 

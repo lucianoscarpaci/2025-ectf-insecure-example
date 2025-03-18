@@ -18,9 +18,13 @@
   , unzip ? pkgs.unzip
 }:
 
+let 
+   pythonEnv = pkgs.python3.withPackages (ps: with ps; (import ./requirements.nix {inherit ps;}));
 
+in
 pkgs.mkShell {
 
+  packages = [ pythonEnv ];
   buildInputs = [
     pkgs.gnumake
     pkgs.python311

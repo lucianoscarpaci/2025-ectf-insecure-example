@@ -33,12 +33,14 @@ def gen_secrets(channels: list[int]) -> bytes:
     :returns: Contents of the secrets file
     """
     try:
-        # Generate an 8-byte key
-        key = secrets.token_bytes(8)
+        # Generate an 16-byte sk
+        sk = secrets.token_bytes(16)
+        # Generate a 16-byte iv
+        iv = secrets.token_bytes(16)
         # Generate a new ED25519 signing key
         signing_key = SigningKey.generate()
         # Signs the nonce using the signing key
-        signed_message = signing_key.sign(key)
+        signed_message = signing_key.sign(sk + iv)
         # define the public key
         public_key = signing_key.verify_key
         # Extract signature (ED25519) from signed message
@@ -46,15 +48,15 @@ def gen_secrets(channels: list[int]) -> bytes:
         # result including channels, nonce, public key, and signature
         result = {
             "channels": channels,
-            "key": base64.b64encode(key).decode('utf-8'),
-            "public_key": base64.b64encode(public_key.encode()).decode('utf-8'),
-            "signature": base64.b64encode(signature).decode('utf-8'),
+            "sk": base64.b64encode(sk).decode("utf-8"),
+            "iv": base64.b64encode(iv).decode("utf-8"),
+            "public_key": base64.b64encode(public_key.encode()).decode("utf-8"),
+            "signature": base64.b64encode(signature).decode("utf-8"),
         }
     except Exception as e:
         logger.error(f"An error occured while generating secrets: {e}")
         raise
-    return json.dumps(result).encode(), key, public_key, signature
-
+    return json.dumps(result).encode(), sk, iv, public_key, signature
 
 
 def parse_args():
@@ -92,7 +94,7 @@ def main():
     # Parse the command line arguments
     args = parse_args()
 
-    secrets, key, public_key, signature = gen_secrets(args.channels)
+    secrets, sk, iv, public_key, signature = gen_secrets(args.channels)
 
     # Print the generated secrets for your own debugging
     # Attackers will NOT have access to the output of this, but feel free to remove
@@ -105,22 +107,19 @@ def main():
         # Dump the secrets to the file
         f.write(secrets)
 
-    key_bin = args.secrets_file.with_name("key.bin")
-    with open(key_bin, "wb") as f:
-        f.write(bytes(key))
-    
-    key_header = args.secrets_file.with_name("key.h")
-    # write a key.h file containing a key that can be used in the C code
-    # example of the key code in C: unsigned char key[] = {0xF, 0xB3, 0x14, 0x91, 0x3A, 0xCA, 0x44, 0xB6};
-    with open(key_header, "w") as f:
-        f.write(f"#ifndef KEY_H\n#define KEY_H\n\n")
-        f.write(f"uint8_t key[8] = {{")
-        for i, byte in enumerate(key):
-            f.write(f"0x{byte:02X}")
-            if i < len(key) - 1:
-                f.write(", ")
-        f.write("};\n")
-        f.write(f"#endif\n")
+        key_header = args.secrets_file.with_name("secrets.h")
+        with open(key_header, "w") as f:
+            f.write(f"#ifndef SECRETS_H\n#define SECRETS_H\n\n")
+            f.write("#define SK {")
+            for i in range(0, len(sk) - 1):
+                f.write(hex(sk[i]) + ", ")
+
+            f.write(hex(sk[len(sk) - 1]) + "}\n")
+            f.write("#define IV {")
+            for i in range(0, len(iv) - 1):
+                f.write(hex(iv[i]) + ", ")
+            f.write(hex(iv[len(iv) - 1]) + "}\n")
+            f.write("#endif\n")
 
     # For your own debugging. Feel free to remove
     logger.success(f"Wrote secrets to {str(args.secrets_file.absolute())}")

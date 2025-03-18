@@ -22,7 +22,8 @@
 #include "simple_flash.h"
 #include "host_messaging.h"
 #include "simple_uart.h"
-#include "key.h"
+#include "secrets.h"
+#include "cryptography.h"
 
 /**********************************************************
  ******************* PRIMITIVE TYPES **********************
@@ -207,16 +208,6 @@ int update_subscription(pkt_len_t pkt_len, subscription_update_packet_t *update)
     write_packet(SUBSCRIBE_MSG, NULL, 0);
     return 0;
 }
-/** @brief This is where the decryption function is stored.
- * @param data A pointer to the data to be decrypted.
- * @param key A pointer to the key to be used for decryption.
- * @param size The size of the data to be decrypted.
- */
-void xor_decrypt(uint8_t *data, uint8_t *key, size_t size) {
-    for (size_t i = 0; i < size; i++) {
-        data[i] ^= key[i % 8];  // XOR each byte with the key
-    }
-}
 /** @brief Processes a packet containing frame data.
  *
  *  @param pkt_len A pointer to the incoming packet.
@@ -244,7 +235,9 @@ int decode(pkt_len_t pkt_len, frame_packet_t *new_frame) {
         *  Do any extra decoding here before returning the result to the host. */
        // only the channel and timestamp are encoded, the frame is not encoded.
        // in theory, it should look similar to the following:
-        xor_decrypt(frames, (uint8_t*)key, frame_size);
+       // decrypt frame data here
+	    print_debug("Decrypting Frame: \n");
+	    decrypt_frame(frames, frame_size);
         write_packet(DECODE_MSG, frames, frame_size);
         return 0;
     } else {

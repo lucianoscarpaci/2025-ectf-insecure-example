@@ -18,8 +18,7 @@ import base64
 from loguru import logger
 from nacl.signing import VerifyKey
 from nacl.exceptions import BadSignatureError
-import hashlib
-import os
+
 
 def gen_subscription(
     secrets: bytes, device_id: int, start: int, end: int, channel: int
@@ -37,13 +36,15 @@ def gen_subscription(
     # TODO: Update this function to provide a Decoder with whatever data it needs to
     #   subscribe to a new channel. This function will be called by the Encoder
     secrets = json.loads(secrets)
-    key = secrets["key"]
+    sk = secrets["sk"]
+    iv = secrets["iv"]
     public_key = secrets["public_key"]
     signature = secrets["signature"]
     # ED25519 signature verification
     try:
         # Decode the key, public key and signature from Base64
-        key = base64.b64decode(key)
+        sk = base64.b64decode(sk)
+        iv = base64.b64decode(iv)
         public_key = base64.b64decode(public_key)
         signature = base64.b64decode(signature)
 
@@ -51,7 +52,7 @@ def gen_subscription(
         verify_key = VerifyKey(public_key)
 
         # Verify the signed message
-        verify_key.verify(key, signature)
+        verify_key.verify(sk + iv, signature)
         logger.success(f"PASSED: The ED25519 signature is valid.")
     except BadSignatureError:
         logger.error(f"FAILED: The ED25519 signature is invalid.")

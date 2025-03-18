@@ -1,4 +1,5 @@
 /**
+ * Author: Luciano Scarpaci Copyright 2025
  * @file    decoder.c
  * @author  Samuel Meyers
  * @brief   eCTF Decoder Example Design Implementation

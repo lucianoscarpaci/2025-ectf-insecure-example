@@ -1,3 +1,4 @@
+/* Author: Luciano Scarpaci Copyright 2025 */
 // cryptography.c
 #include "cryptography.h"
 

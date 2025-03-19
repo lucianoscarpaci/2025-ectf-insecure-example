@@ -1,0 +1,4 @@
+*.nix linguist-language=Nix
+*.ld linguist-generated=true
+*.bin linguist-generated=true
+*.S linguist-generated=true

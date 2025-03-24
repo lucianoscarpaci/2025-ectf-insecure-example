@@ -1,8 +1,8 @@
-# eCTF Satellite TV System 🛰️
+# 🛰️ eCTF Satellite TV System
 
 This repository holds the design for an eCTF Satellite TV System.
 
-## Layout 📁
+## 📁 Layout
 
 - `decoder/` 📁 - Firmware for the television decoder.
     - `project.mk` 📄 - This file defines project specific variables included in the Makefile
@@ -33,7 +33,7 @@ This repository holds the design for an eCTF Satellite TV System.
     - `pyproject.toml` 📄 - File that tells pip how to install this module
 - `reference/` 📁 - Example code for the chacha20-poly1305 encryption and decryption using libsodium in C and Ruby.
 
-## Usage and Requirements 🔧
+## 🔧 Usage and Requirements
 
 This repository contains three main elements: firmware source code, host design elements, and tooling.
 
@@ -49,7 +49,7 @@ to change some details of the command for their own machine (e.g. '`python` -> `
 
 **Note:** Command listed under any "Example Utilization" section should be executed from the root directory of this repository.
 
-### Environment Build 🚀
+### 🚀 Environment Build
 
 The environment is built with Docker, which should install all necessary packages for running the
 design in a reproducible fashion.
@@ -58,19 +58,19 @@ When building for the first time, this may take some time (10+ minutes) to
 complete. Furthermore, it is recommended that you use a wired internet
 connection when building for the first time.
 
-### Host Tools 🧰
+### 🧰 Host Tools
 
 Host Tools includes everything in the `tools` directory. These do not need to be modified by teams
 except for local testing. Your design should work with the standardized
 interface between host and Decoder hardware. The host tools will pass any
 required arguments to the Decoder hardware and process all relevant output.
 
-### Decoder 📺
+### 📺 Decoder
 
 When building the decoder, the `Makefile` in the decoder directory will be
 invoked by the Docker run command.
 
-## Using the eCTF Tools ⚙️
+## ⚙️ Using the eCTF Tools
 
 In order to run the eCTF Tools, you must first ensure that you have installed
 all of the required packages (ideally into a virtual environment). You can
@@ -137,7 +137,7 @@ Compile your firmware with hosttools. This will create a firmware binary in the 
 
 #### Note: If the build is hanging indefinitely, try restarting Docker. If that does not resolve the issue, a system restart should fix the issue.
 
-## Generating Subscription Updates [After flashing the decoder has been done.] 🔒
+## 🔒 Generating Subscription Updates [After flashing the decoder has been done.]
 
 Subscription updates are generated using the `gen_subscription.py` script.
 The `gen_subscription` function will be the only feature that teams will need to update.
@@ -296,13 +296,13 @@ options:
 ./hosttools test
 ```
 
-## Running the Satellite and Encoder 📡 🛰️ 📺
+## 📡 🛰️ 📺 Running the Satellite and Encoder
 
 To run all of the infrastructure, you will need to first start the uplink. Then, in a
 separate terminal window, start the satellite. Finally, start a TV for every decoder
 being tested while the satellite is running.
 
-### Uplink 📡
+### 📡 Uplink 
 
 The uplink is the component of the Satellite TV system responsible for sending encoded
 frames to the satellite. It will use the encoder from your design to encode frames.
@@ -329,7 +329,7 @@ options:
 ```bash
 ./hosttools uplink
 ```
-### Satellite 🛰️
+### 🛰️ Satellite 
 
 The satellite is responsible for broadcasting all frames received from the uplink to all
 listening TVs on the host computer.
@@ -356,7 +356,7 @@ options:
 ./hosttools satellite
 ```
 
-### TV 📺
+### 📺 TV 
 
 The TV is responsible for sending encoded frames received from the satellite to a
 decoder connected to the host computer and returning the decoded result.

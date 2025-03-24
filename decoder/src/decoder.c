@@ -23,6 +23,9 @@
 #include "simple_flash.h"
 #include "host_messaging.h"
 #include "simple_uart.h"
+#include "cameraif.h"
+#include "i2s.h"
+#include "nvic_table.h"
 #include "secrets.h"
 #include "cryptography.h"
 
@@ -329,6 +332,13 @@ int main(void) {
     uint16_t pkt_len;
     // initialize the device
     init();
+    //Enable global interrupts
+    __enable_irq();
+    //Disable audio jacks
+    MXC_I2S_TXDisable();
+    MXC_I2S_RXDisable();
+    //Disable camera
+    MXC_PCIF_Stop();
     print_debug("Decoder Booted!\n");
     // process commands forever
     while (1) {

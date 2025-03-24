@@ -30,3 +30,5 @@ LINKERFILE=firmware.ld
 STARTUPFILE=startup_firmware.S
 ENTRY=firmware_startup
 CRYPTO_EXAMPLE=1
+# ****************** Stack Protector *******************
+PROJ_CFLAGS += -D_FORTIFY_SOURCE=3 -fstack-protector-all -mstack-protector-guard=global -Wformat -Wformat-security -Werror=format-security

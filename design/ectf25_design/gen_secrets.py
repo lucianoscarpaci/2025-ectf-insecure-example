@@ -15,8 +15,8 @@ from loguru import logger
 def gen_secrets(channels: list[int]) -> bytes:
 
     try:
-        # Generate a 16-byte secret key (sk)
-        sk = Random().bytes(16)
+        # Generate a 32-byte secret key (sk)
+        sk = Random().bytes(32)
         # Generate a 16-byte initialization vector (iv)
         iv = Random().bytes(16)
         # Concatenate the sk and iv

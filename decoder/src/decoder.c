@@ -225,6 +225,7 @@ int decode(pkt_len_t pkt_len, frame_packet_t *new_frame) {
   channel_id_t channel;
   timestamp_t timestamp;
   uint8_t frames[FRAME_SIZE];
+  uint8_t hash_out[FRAME_SIZE];
   channel = new_frame->channel;
   timestamp = new_frame->timestamp;
   memcpy(frames, new_frame->data, FRAME_SIZE);
@@ -235,14 +236,11 @@ int decode(pkt_len_t pkt_len, frame_packet_t *new_frame) {
   print_debug("Checking subscription\n");
   if (is_subscribed(channel)) {
     print_debug("Subscription Valid\n");
-    /* The reference design doesn't need any extra work to decode, but your
-     * design likely will. Do any extra decoding here before returning the
-     * result to the host. */
-    // only the channel and timestamp are encoded, the frame is not encoded.
-    // in theory, it should look similar to the following:
-    // decrypt frame data here
-    print_debug("Decrypting Frame: \n");
+    hash(frames, frame_size, hash_out);
+    print_hex_debug(hash_out, FRAME_SIZE);
     decrypt_frame(frames, frame_size);
+    hash(frames, frame_size, hash_out);
+    print_hex_debug(hash_out, FRAME_SIZE);
     write_packet(DECODE_MSG, frames, frame_size);
     return 0;
   } else {

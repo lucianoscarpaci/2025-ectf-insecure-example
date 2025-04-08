@@ -114,7 +114,7 @@ This will generate a secrets file for channels 1, 3, and 4.
 
 ```bash
 mkdir secrets
-./hosttools gs 1 3 4
+./hosttools gs
 ```
 
 ### Building the Decoder
@@ -195,7 +195,7 @@ options:
 this is two parts specifying the path to the firmware, and the second is to the connected device.
 
 ```bash
-./hosttools flash -b ./decoder/build_out/max78000.bin
+./hosttools flash
 ```
 
 ## Host Tools
@@ -251,7 +251,7 @@ options:
 After creating subscription channels, In the decoder directory run this command.
 
 ```bash
-./hosttools subscribe
+./hosttools sub
 ```
 
 ### Tester Tool
@@ -292,9 +292,19 @@ options:
 
 #### Mac/Linux
 
-```
+```bash
 ./hosttools test
 ```
+
+## Combining all the build steps in one command
+
+### **Example Utilization**
+
+#### Mac/Linux
+```bash
+./hosttools gs compile flash gen_subscription sub test
+```
+
 
 ## 📡 🛰️ 📺 Running the Satellite and Encoder
 
@@ -382,3 +392,4 @@ options:
 ```bash
  ./hosttools tv
 ```
+

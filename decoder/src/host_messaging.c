@@ -20,10 +20,14 @@
  * 
  *  @param buf Pointer to a buffer where the incoming bytes should be stored.
  *  @param len The number of bytes to be read.
- * 
+ *  @param max_len The maximum number of bytes that can be read into the buffer. 
  *  @return 0 on success. A negative value on error.
 */
-int read_bytes(void *buf, uint16_t len) {
+int read_bytes(void *buf, uint16_t len, uint16_t max_len) {
+    
+    if (len > max_len) {
+        return -1; 
+    }
     int result;
     int i;
 
@@ -53,7 +57,7 @@ void read_header(msg_header_t *hdr) {
         hdr->magic = uart_readbyte();
     }
     hdr->cmd = uart_readbyte();
-    read_bytes(&hdr->len, sizeof(hdr->len));
+    read_bytes(&hdr->len, sizeof(hdr->len), CMD_LEN_LEN);
 }
 
 /** @brief Receive an ACK from UART.
@@ -75,12 +79,16 @@ uint8_t read_ack() {
  * 
  *  @param buf Pointer to a buffer that stores the outgoing bytes.
  *  @param len The number of bytes to write.
+ *  @param max_len The maximum number of bytes that can be written to the buffer.
  *  @param should_Ack True if the decoder should expect an ACK. This should be false for
- *                    debug and ACK messages.
- * 
+ *                    debug and ACK messages. 
  *  @return 0 on success. A negative value on error.
 */
-int write_bytes(const void *buf, uint16_t len, bool should_ack) {
+int write_bytes(const void *buf, uint16_t len, uint16_t max_len, bool should_ack) {
+    
+    if (len > max_len) {
+        return -1; 
+    }
     for (int i = 0; i < len; i++) {
         if (i % 256 == 0 && i != 0) {  // Expect an ACK after sending every 256 bytes
             if (should_ack && read_ack() < 0) {
@@ -111,7 +119,7 @@ int write_hex(msg_type_t type, const void *buf, size_t len) {
     hdr.cmd = type;
     hdr.len = len*2;
 
-    write_bytes(&hdr, MSG_HEADER_SIZE, false /* should_ack */);
+    write_bytes(&hdr, MSG_HEADER_SIZE, MSG_HEADER_SIZE, false /* should_ack */);
     if (type != DEBUG_MSG && read_ack() < 0) {
         // If the header was not ack'd, don't send the message
         return -1;
@@ -124,7 +132,7 @@ int write_hex(msg_type_t type, const void *buf, size_t len) {
                 return -1;
             }
         }
-    	printf("%02x", ((uint8_t *)buf)[i]);
+        printf("%02x", ((uint8_t *)buf)[i]);
         fflush(stdout);
     }
     return 0;
@@ -146,7 +154,7 @@ int write_packet(msg_type_t type, const void *buf, uint16_t len) {
     hdr.cmd = type;
     hdr.len = len;
 
-    result = write_bytes(&hdr, MSG_HEADER_SIZE, false);
+    result = write_bytes(&hdr, MSG_HEADER_SIZE, MSG_HEADER_SIZE, false);
     if (type == ACK_MSG) {
         return result;
     }
@@ -157,7 +165,7 @@ int write_packet(msg_type_t type, const void *buf, uint16_t len) {
     }
     // If there is data to write, write it
     if (len > 0) {
-        result = write_bytes(buf, len, type != DEBUG_MSG);
+        result = write_bytes(buf, len, len, type != DEBUG_MSG);
         // If we still need to ACK the last block (write_bytes does not handle the final ACK)
         if (type != DEBUG_MSG && read_ack() < 0) {
             return -1;
@@ -193,8 +201,8 @@ int read_packet(msg_type_t* cmd, void *buf, uint16_t *len) {
 
     if (header.cmd != ACK_MSG) {
         write_ack();  // ACK the header
-        if (header.len && buf != NULL) {
-            if (read_bytes(buf, header.len) < 0) {
+        if (header.len && buf != NULL && *len >= header.len) {
+            if (read_bytes(buf, header.len, *len) < 0) {
                 return -1;
             }
         }

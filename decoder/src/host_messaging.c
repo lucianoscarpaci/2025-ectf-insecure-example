@@ -25,17 +25,17 @@ int read_bytes(void *buf, uint16_t len, uint16_t max_len) {
     memset(buf, 0, len);
     int result;
     for (int i = 0; i < len; i++) {
-        if (i % 256 == 0 && i != 0) { // Send an ACK after receiving 256 bytes
+        if (i % ACK_BLOCK_SIZE == 0 && i != 0) {
             write_ack();
         }
         result = uart_readbyte();
-        if (result < 0) {  // if there was an error, return immediately
+        if (result < 0) {  
             return result;
         }
         ((uint8_t *)buf)[i] = (uint8_t)result;
     }
 
-    return 0;
+    return E_NO_ERROR;
 }
 
 /** @brief Read a msg header from UART.
@@ -46,11 +46,15 @@ void read_header(msg_header_t *hdr) {
     if (hdr == NULL) {
         return; 
     }
+
+    int attempts = 0;
     hdr->magic = uart_readbyte();
-    // Any bytes until '%' will be read, but ignored.
-    // Once we receive a '%', continue with processing the rest of the message.
-    while (hdr->magic != MSG_MAGIC) {
+    while (hdr->magic != MSG_MAGIC && attempts++ < HEADER_RETRY_LIMIT) {
         hdr->magic = uart_readbyte();
+    }
+
+    if (attempts >= HEADER_RETRY_LIMIT) {
+        return;
     }
     hdr->cmd = uart_readbyte();
     read_bytes(&hdr->len, sizeof(hdr->len), sizeof(hdr->len));
@@ -60,12 +64,11 @@ void read_header(msg_header_t *hdr) {
  * 
  *  @return 0 on success. A negative value on error.
 */
-uint8_t read_ack() {
+int read_ack() {
     msg_header_t ack_buf = {0};
-
     read_header(&ack_buf);
     if (ack_buf.cmd == ACK_MSG) {
-        return ERR_SUCCESS;
+        return E_NO_ERROR;
     } else {
         return ERR_FAIL;
     }
@@ -87,8 +90,9 @@ int write_bytes(const void *buf, uint16_t len, uint16_t max_len, bool should_ack
     if (len > max_len) {
         return ERR_FAIL;
     }
+
     for (int i = 0; i < len; i++) {
-        if (i % 256 == 0 && i != 0) {  // Expect an ACK after sending every 256 bytes
+        if (i % ACK_BLOCK_SIZE == 0 && i != 0) {
             if (should_ack && read_ack() < 0) {
                 return ERR_FAIL;
             }
@@ -97,8 +101,7 @@ int write_bytes(const void *buf, uint16_t len, uint16_t max_len, bool should_ack
     }
 
     fflush(stdout);
-
-    return ERR_SUCCESS;
+    return E_NO_ERROR;
 }
 
 /** @brief Write len bytes to UART in hex. 2 bytes will be printed for every byte.
@@ -113,6 +116,7 @@ int write_hex(msg_type_t type, const void *buf, size_t len) {
     if (buf == NULL) {
         return ERR_FAIL; 
     }
+
     msg_header_t hdr = {0};
     hdr.magic = MSG_MAGIC;
     hdr.cmd = type;
@@ -121,13 +125,14 @@ int write_hex(msg_type_t type, const void *buf, size_t len) {
     if (write_bytes(&hdr, MSG_HEADER_SIZE, MSG_HEADER_SIZE, false) < 0) {
         return ERR_FAIL;
     }
+
     if (type != DEBUG_MSG && read_ack() < 0) {
         // If the header was not ack'd, don't send the message
         return ERR_FAIL;
     }
 
     for (size_t i = 0; i < len; i++) {
-        if (i % (256 / 2) == 0 && i != 0) {
+        if (i % (ACK_BLOCK_SIZE / 2) == 0 && i != 0) {
             if (type != DEBUG_MSG && read_ack() < 0) {
                 // If the block was not ack'd, don't send the rest of the message
                 return ERR_FAIL;
@@ -136,7 +141,7 @@ int write_hex(msg_type_t type, const void *buf, size_t len) {
         printf("%02x", ((const uint8_t *)buf)[i]);
         fflush(stdout);
     }
-    return ERR_SUCCESS;
+    return E_NO_ERROR;
 }
 
 /** @brief Send a message to the host, expecting an ack after every 256 bytes.
@@ -151,6 +156,7 @@ int write_packet(msg_type_t type, const void *buf, uint16_t len) {
     if (buf == NULL && len > 0) {
         return ERR_FAIL; 
     }
+
     msg_header_t hdr = {0};
     hdr.magic = MSG_MAGIC;
     hdr.cmd = type;
@@ -161,7 +167,6 @@ int write_packet(msg_type_t type, const void *buf, uint16_t len) {
         return result;
     }
 
-    // If the header was not ack'd, don't send the message
     if (type != DEBUG_MSG && read_ack() < 0) {
         return ERR_FAIL;
     }
@@ -174,7 +179,7 @@ int write_packet(msg_type_t type, const void *buf, uint16_t len) {
         }
     }
 
-    return ERR_SUCCESS;
+    return E_NO_ERROR;
 }
 
 /** @brief Reads a packet from console UART.
@@ -199,17 +204,17 @@ int read_packet(msg_type_t* cmd, void *buf, uint16_t *len) {
     }
 
     if (header.cmd != ACK_MSG) {
-        write_ack();  // ACK the header
+        write_ack();
         if (header.len && buf != NULL && *len >= header.len) {
             if (read_bytes(buf, header.len, *len) < 0) {
                 return ERR_FAIL;
             }
         }
         if (header.len) {
-            if (write_ack() < 0) { // ACK the final block (not handled by read_bytes)
+            if (write_ack() < 0) {
                 return ERR_FAIL;
             }
         }
     }
-    return ERR_SUCCESS;
+    return E_NO_ERROR;
 }

@@ -12,8 +12,9 @@
 #define CMD_TYPE_LEN sizeof(char)
 #define CMD_LEN_LEN sizeof(uint16_t)
 #define MSG_MAGIC '%'     // '%' - 0x25
-#define ERR_FAIL -1
-#define ERR_SUCCESS 0
+#define ERR_FAIL (-1)
+#define ACK_BLOCK_SIZE 256
+#define HEADER_RETRY_LIMIT 100
 typedef enum {
     DECODE_MSG = 'D',     // 'D' - 0x44
     SUBSCRIBE_MSG = 'S',  // 'S' - 0x53

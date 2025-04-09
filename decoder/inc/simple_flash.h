@@ -3,7 +3,7 @@
 
 #ifndef __SIMPLE_FLASH__
 #define __SIMPLE_FLASH__
-#define ERR_FAIL -1
+#define ERR_FAIL (-1)
 #include <stdint.h>
 
 /**

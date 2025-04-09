@@ -54,6 +54,9 @@ void flash_simple_init(void) {
  * In order to be re-written the entire page must be erased.
 */
 int flash_simple_erase_page(uint32_t address) {
+    if (address % MXC_FLASH_PAGE_SIZE != 0) {
+        return ERR_FAIL;
+    }
     return MXC_FLC_PageErase(address);
 }
 
@@ -68,7 +71,7 @@ int flash_simple_erase_page(uint32_t address) {
  * with the specified amount of bytes
 */
 void flash_simple_read(uint32_t address, void* buffer, uint32_t size) {
-    memcpy(buffer, (void*)address, size);
+    MXC_FLC_Read(address, (uint32_t*)buffer, size);
 }
 
 /**

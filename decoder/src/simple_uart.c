@@ -1,15 +1,5 @@
-/**
- * @file "simple_uart.c"
- * @author Samuel Meyers
- * @brief UART Interrupt Handler Implementation 
- * @date 2025
- *
- * This source file is part of an example system for MITRE's 2025 Embedded System CTF (eCTF).
- * This code is being provided only for educational purposes for the 2025 MITRE eCTF competition,
- * and may not meet MITRE standards for quality. Use this code at your own risk!
- *
- * @copyright Copyright (c) 2025 The MITRE Corporation
- */
+/* Author: Luciano Scarpaci Copyright 2025 */
+// simple_uart.c
 
 #include "simple_uart.h"
 #include <stdio.h>
@@ -27,14 +17,26 @@
  *  @note This function should be called once upon startup.
  *  @return 0 upon success.  Negative if error.
 */
-int uart_init(void){
+int uart_init(void) {
     int ret;
 
-    if ((ret = MXC_UART_Init(MXC_UART_GET_UART(CONSOLE_UART), UART_BAUD, MXC_UART_IBRO_CLK)) != E_NO_ERROR) {
+    // Initialize the UART interface with the specified UART instance, baud rate, and clock source.
+    ret = MXC_UART_Init(MXC_UART_GET_UART(CONSOLE_UART), UART_BAUD, MXC_UART_IBRO_CLK);
+    if (ret != E_NO_ERROR) {
         printf("Error initializing UART: %d\n", ret);
         return ret;
     }
-
+    
+    ret = MXC_UART_ClearRXFIFO(MXC_UART_GET_UART(CONSOLE_UART));
+    if (ret != E_NO_ERROR) {
+        printf("Error clearing RX FIFO: %d\n", ret);
+        return ret;
+    }
+    ret = MXC_UART_ClearTXFIFO(MXC_UART_GET_UART(CONSOLE_UART));
+    if (ret != E_NO_ERROR) {
+        printf("Error clearing TX FIFO: %d\n", ret);
+        return ret;
+    }
     return E_NO_ERROR;
 }
 
@@ -45,6 +47,10 @@ int uart_init(void){
 */
 int uart_readbyte_raw(void){
     int data = MXC_UART_ReadCharacterRaw(MXC_UART_GET_UART(CONSOLE_UART));
+    if (data < 0) {
+        printf("Error reading byte from UART: %d\n", data);
+        return data;
+    }
     return data;
 }
 
@@ -55,6 +61,10 @@ int uart_readbyte_raw(void){
 */
 int uart_readbyte(void){
     int data = MXC_UART_ReadCharacter(MXC_UART_GET_UART(CONSOLE_UART));
+    if (data < 0) {
+        printf("Error reading byte from UART: %d\n", data);
+        return data;
+    }
     return data;
 }
 
@@ -71,6 +81,16 @@ void uart_writebyte(uint8_t data) {
 /** @brief Flushes UART.
 */
 void uart_flush(void){
-    MXC_UART_ClearRXFIFO(MXC_UART_GET_UART(CONSOLE_UART));
-    MXC_UART_ClearTXFIFO(MXC_UART_GET_UART(CONSOLE_UART));
+    int ret;
+
+    ret = MXC_UART_ClearRXFIFO(MXC_UART_GET_UART(CONSOLE_UART));
+    if (ret != E_NO_ERROR) {
+        printf("Error clearing RX FIFO: %d\n", ret);
+        return;
+    }
+    ret = MXC_UART_ClearTXFIFO(MXC_UART_GET_UART(CONSOLE_UART));
+    if (ret != E_NO_ERROR) {
+        printf("Error clearing TX FIFO: %d\n", ret);
+        return;
+    }
 }

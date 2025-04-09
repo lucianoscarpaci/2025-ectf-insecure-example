@@ -1,6 +1,5 @@
-/**
- * Author: Luciano Scarpaci Copyright 2025
- */
+/* Author: Luciano Scarpaci Copyright 2025 */
+// decoder.c
 
 /*********************** INCLUDES *************************/
 #include "board.h"

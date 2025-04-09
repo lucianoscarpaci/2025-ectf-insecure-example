@@ -1,25 +1,12 @@
-/**
- * @file "simple_flash.c"
- * @author Samuel Meyers
- * @brief Simple Flash Interface Implementation 
- * @date 2025
- *
- * This source file is part of an example system for MITRE's 2025 Embedded System CTF (eCTF).
- * This code is being provided only for educational purposes for the 2025 MITRE eCTF competition,
- * and may not meet MITRE standards for quality. Use this code at your own risk!
- *
- * @copyright Copyright (c) 2025 The MITRE Corporation
- */
+/* Author: Luciano Scarpaci Copyright 2025 */
+// simple_flash.c
 
 #include "simple_flash.h"
-
 #include <stdio.h>
-
 #include "flc.h"
 #include "icc.h"
+#include <string.h>
 #include "nvic_table.h"
-
-#include <stdio.h>
 
 /**
  * @brief ISR for the Flash Controller
@@ -81,7 +68,7 @@ int flash_simple_erase_page(uint32_t address) {
  * with the specified amount of bytes
 */
 void flash_simple_read(uint32_t address, void* buffer, uint32_t size) {
-    MXC_FLC_Read(address, (uint32_t *)buffer, size);
+    memcpy(buffer, (void*)address, size);
 }
 
 /**
@@ -99,5 +86,8 @@ void flash_simple_read(uint32_t address, void* buffer, uint32_t size) {
  * flash_simple_erase_page documentation.
 */
 int flash_simple_write(uint32_t address, void* buffer, uint32_t size) {
+    if (size % 4 != 0) {
+        return ERR_FAIL;
+    }
     return MXC_FLC_Write(address, size, (uint32_t *)buffer);
 }

@@ -16,11 +16,10 @@
 */
 int read_bytes(void *buf, uint16_t len, uint16_t max_len) {
     if (buf == NULL) {
-        return ERR_FAIL; 
+        return ERR_FAIL;
     }
-
     if (len > max_len) {
-        return ERR_FAIL; 
+        return ERR_FAIL;
     }
 
     memset(buf, 0, len);
@@ -47,18 +46,14 @@ void read_header(msg_header_t *hdr) {
     if (hdr == NULL) {
         return; 
     }
-    int tries = 0;
     hdr->magic = uart_readbyte();
     // Any bytes until '%' will be read, but ignored.
     // Once we receive a '%', continue with processing the rest of the message.
     while (hdr->magic != MSG_MAGIC) {
         hdr->magic = uart_readbyte();
     }
-    if (tries >= 1000) {
-        return;
-    }
     hdr->cmd = uart_readbyte();
-    read_bytes(&hdr->len, sizeof(hdr->len), CMD_LEN_LEN);
+    read_bytes(&hdr->len, sizeof(hdr->len), sizeof(hdr->len));
 }
 
 /** @brief Receive an ACK from UART.
@@ -90,7 +85,7 @@ int write_bytes(const void *buf, uint16_t len, uint16_t max_len, bool should_ack
         return ERR_FAIL; 
     }
     if (len > max_len) {
-        return ERR_FAIL; 
+        return ERR_FAIL;
     }
     for (int i = 0; i < len; i++) {
         if (i % 256 == 0 && i != 0) {  // Expect an ACK after sending every 256 bytes

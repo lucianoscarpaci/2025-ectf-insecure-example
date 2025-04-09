@@ -302,7 +302,7 @@ options:
 
 #### Mac/Linux
 ```bash
-./hosttools gs compile flash gen_subscription sub test
+./hosttools firmware compile flash
 ```
 
 

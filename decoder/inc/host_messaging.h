@@ -1,15 +1,5 @@
-/**
- * @file host_messaging.h
- * @author Samuel Meyers
- * @brief eCTF Host Messaging Implementation 
- * @date 2025
- *
- * This source file is part of an example system for MITRE's 2025 Embedded System CTF (eCTF).
- * This code is being provided only for educational purposes for the 2025 MITRE eCTF competition,
- * and may not meet MITRE standards for quality. Use this code at your own risk!
- *
- * @copyright Copyright (c) 2025 The MITRE Corporation
- */
+/* Author: Luciano Scarpaci Copyright 2025 */
+// host_messaging.h
 
 #ifndef __HOST_MESSAGING__
 #define __HOST_MESSAGING__
@@ -22,7 +12,8 @@
 #define CMD_TYPE_LEN sizeof(char)
 #define CMD_LEN_LEN sizeof(uint16_t)
 #define MSG_MAGIC '%'     // '%' - 0x25
-
+#define ERR_FAIL -1
+#define ERR_SUCCESS 0
 typedef enum {
     DECODE_MSG = 'D',     // 'D' - 0x44
     SUBSCRIBE_MSG = 'S',  // 'S' - 0x53

@@ -1,0 +1,96 @@
+/* Author: Luciano Scarpaci Copyright 2025 */
+// secure_uart.c
+
+#include "secure_uart.h"
+#include <stdio.h>
+#include <stdint.h>
+#include <string.h>
+#include "uart.h"
+#include "nvic_table.h"
+#include "host_messaging.h"
+#include "board.h"
+#include "mxc_device.h"
+
+
+/** @brief Initializes the UART Interrupt handler.
+ * 
+ *  @note This function should be called once upon startup.
+ *  @return 0 upon success.  Negative if error.
+*/
+int uart_init(void) {
+    int ret;
+
+    // Initialize the UART interface with the specified UART instance, baud rate, and clock source.
+    ret = MXC_UART_Init(MXC_UART_GET_UART(CONSOLE_UART), UART_BAUD, MXC_UART_IBRO_CLK);
+    if (ret != E_NO_ERROR) {
+        printf("Error initializing UART: %d\n", ret);
+        return ret;
+    }
+    
+    ret = MXC_UART_ClearRXFIFO(MXC_UART_GET_UART(CONSOLE_UART));
+    if (ret != E_NO_ERROR) {
+        printf("Error clearing RX FIFO: %d\n", ret);
+        return ret;
+    }
+    ret = MXC_UART_ClearTXFIFO(MXC_UART_GET_UART(CONSOLE_UART));
+    if (ret != E_NO_ERROR) {
+        printf("Error clearing TX FIFO: %d\n", ret);
+        return ret;
+    }
+    return E_NO_ERROR;
+}
+
+/** @brief Reads a byte from UART and reports an error if the read fails.
+ * 
+ *  @return The character read.  Otherwise see MAX78000 Error Codes for
+ *      a list of return codes.
+*/
+int uart_readbyte_raw(void){
+    int data = MXC_UART_ReadCharacterRaw(MXC_UART_GET_UART(CONSOLE_UART));
+    if (data < 0) {
+        printf("Error reading byte from UART: %d\n", data);
+        return data;
+    }
+    return data;
+}
+
+/** @brief Reads the next available character from UART.
+ * 
+ *  @return The character read.  Otherwise see MAX78000 Error Codes for
+ *      a list of return codes.
+*/
+int uart_readbyte(void){
+    int data = MXC_UART_ReadCharacter(MXC_UART_GET_UART(CONSOLE_UART));
+    if (data < 0) {
+        printf("Error reading byte from UART: %d\n", data);
+        return data;
+    }
+    return data;
+}
+
+/** @brief Writes a byte to UART.
+ * 
+ *  @param data The byte to be written.
+*/
+void uart_writebyte(uint8_t data) {
+    while (MXC_UART_GET_UART(CONSOLE_UART)->status & MXC_F_UART_STATUS_TX_FULL) {
+    }
+    MXC_UART_GET_UART(CONSOLE_UART)->fifo = data;
+}
+
+/** @brief Flushes UART.
+*/
+void uart_flush(void){
+    int ret;
+
+    ret = MXC_UART_ClearRXFIFO(MXC_UART_GET_UART(CONSOLE_UART));
+    if (ret != E_NO_ERROR) {
+        printf("Error clearing RX FIFO: %d\n", ret);
+        return;
+    }
+    ret = MXC_UART_ClearTXFIFO(MXC_UART_GET_UART(CONSOLE_UART));
+    if (ret != E_NO_ERROR) {
+        printf("Error clearing TX FIFO: %d\n", ret);
+        return;
+    }
+}

@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <stddef.h>
 #include <stdint.h>
-#include "simple_uart.h"
+#include "secure_uart.h"
 
 #define CMD_TYPE_LEN sizeof(char)
 #define CMD_LEN_LEN sizeof(uint16_t)

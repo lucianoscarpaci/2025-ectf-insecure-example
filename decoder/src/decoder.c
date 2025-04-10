@@ -11,8 +11,8 @@
 #include "mxc_device.h"
 #include "nvic_table.h"
 #include "secrets.h"
-#include "simple_flash.h"
-#include "simple_uart.h"
+#include "secure_flash.h"
+#include "secure_uart.h"
 #include "status_led.h"
 #include <stdint.h>
 #include <stdio.h>
@@ -205,8 +205,8 @@ int update_subscription(pkt_len_t pkt_len,
     return -1;
   }
 
-  flash_simple_erase_page(FLASH_STATUS_ADDR);
-  flash_simple_write(FLASH_STATUS_ADDR, &decoder_status, sizeof(flash_entry_t));
+  flash_secure_erase_page(FLASH_STATUS_ADDR);
+  flash_secure_write(FLASH_STATUS_ADDR, &decoder_status, sizeof(flash_entry_t));
   // Success message with an empty body
   write_packet(SUBSCRIBE_MSG, NULL, 0);
   return 0;
@@ -256,10 +256,10 @@ void init() {
   int ret;
 
   // Initialize the flash peripheral to enable access to persistent memory
-  flash_simple_init();
+  flash_secure_init();
 
   // Read starting flash values into our flash status struct
-  flash_simple_read(FLASH_STATUS_ADDR, &decoder_status, sizeof(flash_entry_t));
+  flash_secure_read(FLASH_STATUS_ADDR, &decoder_status, sizeof(flash_entry_t));
   if (decoder_status.first_boot != FLASH_FIRST_BOOT) {
     /* If this is the first boot of this decoder, mark all channels as
      * unsubscribed. This data will be persistent across reboots of the decoder.
@@ -282,8 +282,8 @@ void init() {
     memcpy(decoder_status.subscribed_channels, subscription,
            MAX_CHANNEL_COUNT * sizeof(channel_status_t));
 
-    flash_simple_erase_page(FLASH_STATUS_ADDR);
-    flash_simple_write(FLASH_STATUS_ADDR, &decoder_status,
+    flash_secure_erase_page(FLASH_STATUS_ADDR);
+    flash_secure_write(FLASH_STATUS_ADDR, &decoder_status,
                        sizeof(flash_entry_t));
   }
 
@@ -312,10 +312,11 @@ void STATUS_LED_CYCLE() {
   MXC_Delay(1000000);
   STATUS_LED_BLUE();
   MXC_Delay(1000000);
-  STATUS_LED_PURPLE();
-  MXC_Delay(1000000);
   STATUS_LED_WHITE();
   MXC_Delay(1000000);
+  STATUS_LED_PURPLE();
+  MXC_Delay(1000000);
+  
 }
 
 /**********************************************************
